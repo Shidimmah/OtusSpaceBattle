@@ -5,7 +5,7 @@ from sqlalchemy.future import select
 from database import get_db
 from models import User
 import bcrypt
-import jwt
+from jwt import encode, decode
 
 router = APIRouter()
 
@@ -46,5 +46,5 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     if not bcrypt.checkpw(user.password.encode(), user_in_db.hashed_password.encode()):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    token = jwt.encode({"user_id": user_in_db.id}, SECRET_KEY, algorithm="HS256")
+    token = encode({"user_id": user_in_db.id}, SECRET_KEY, algorithm="HS256")
     return {"access_token": token}
