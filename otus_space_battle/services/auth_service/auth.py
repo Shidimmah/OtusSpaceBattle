@@ -1,16 +1,21 @@
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from database import get_db
 from models import User
 import bcrypt
-from jwt import encode, decode
+from jwt import encode, decode, ExpiredSignatureError, InvalidTokenError
+from datetime import datetime, timedelta
 
+security = HTTPBearer()
 router = APIRouter()
 
 SECRET_KEY = "SECRET123"
-
+REFRESH_SECRET_KEY = "REFRESH_SECRET123"
+ACCESS_TOKEN_EXPIRE_MINUTES = 15  # Время жизни access-токена (15 мин)
+REFRESH_TOKEN_EXPIRE_DAYS = 7     # Время жизни refresh-токена (7 дней)
 
 # Описание схемы данных
 class UserRegister(BaseModel):
@@ -22,6 +27,35 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+def create_access_token(user_id: int):
+    expiration = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {"user_id": user_id, "exp": expiration}
+    return encode(payload, SECRET_KEY, algorithm="HS256")
+
+def create_refresh_token(user_id: int):
+    expiration = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    payload = {"user_id": user_id, "exp": expiration}
+    return encode(payload, REFRESH_SECRET_KEY, algorithm="HS256")
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    token = credentials.credentials
+    try:
+        payload = decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+def verify_refresh_token(refresh_token: str):
+    try:
+        payload = decode(refresh_token, REFRESH_SECRET_KEY, algorithms=["HS256"])
+        return payload
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Refresh token expired")
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 
 @router.post("/register")
@@ -46,5 +80,17 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     if not bcrypt.checkpw(user.password.encode(), user_in_db.hashed_password.encode()):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    token = encode({"user_id": user_in_db.id}, SECRET_KEY, algorithm="HS256")
-    return {"access_token": token}
+    access_token = create_access_token(user_in_db.id)
+    refresh_token = create_refresh_token(user_in_db.id)
+
+    return {"access_token": access_token, "refresh_token": refresh_token}
+
+@router.post("/refresh")
+async def refresh_token(refresh_token: str):
+    payload = verify_refresh_token(refresh_token)
+    new_access_token = create_access_token(payload["user_id"])
+    return {"access_token": new_access_token}
+
+@router.get("/protected")
+async def protected_route(payload: dict = Depends(verify_token)):
+    return {"message": "You have access!", "user_id": payload["user_id"]}
