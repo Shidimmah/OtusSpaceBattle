@@ -20,11 +20,11 @@ async def register_user(username: str, password: str, email: str):
         response = await client.post(f"{AUTH_SERVICE_URL}/register", json={"username": username, "password": password, "email": email})
     return response.json()
 
-@app.post("/login")
+@app.post("/auth/login")
 async def login_user(username: str, password: str):
     """Авторизация пользователя через Auth Service"""
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{AUTH_SERVICE_URL}/login", json={"username": username, "password": password})
+        response = await client.post(f"{AUTH_SERVICE_URL}/auth/login", json={"username": username, "password": password})
     return response.json()
 
 @app.post("/create_game")
