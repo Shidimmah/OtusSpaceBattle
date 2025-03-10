@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   api_gateway:
@@ -6,10 +6,8 @@ services:
     container_name: otus_api_gateway
     ports:
       - "80:8000"
-#    depends_on:
-#      - auth_service
-#      - matchmaking_service
-#      - game_server
+    depends_on:
+      - auth_service
 
   auth_service:
     build: ./services/auth_service
@@ -20,39 +18,6 @@ services:
       - DATABASE_URL=postgresql+asyncpg://user:password@db/auth_db
     ports:
       - "8001:8001"
-#
-#  matchmaking_service:
-#    build: ./services/matchmaking_service
-#    container_name: otus_matchmaking_service
-#    depends_on:
-#      - db
-#
-#  game_server:
-#    build: ./services/game_server
-#    container_name: otus_game_server
-#    depends_on:
-#      - event_queue
-#
-#  event_queue:
-#    image: redis:latest
-#    container_name: otus_event_queue
-#    restart: always
-#    ports:
-#      - "6379:6379"
-
-  logging_service:
-    build: ./services/logging_service
-    container_name: otus_logging_service
-    ports:
-      - "8005:8005"
-    volumes:
-      - ./services/logging_service/logs:/app/logs
-
-#  analytics_service:
-#    build: ./services/analytics_service
-#    container_name: otus_analytics_service
-#    depends_on:
-#      - db
 
   db:
     image: postgres:13

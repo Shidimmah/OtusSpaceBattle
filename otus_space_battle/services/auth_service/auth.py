@@ -11,15 +11,20 @@ router = APIRouter()
 SECRET_KEY = "SECRET123"
 
 
-# Описание данных для регистрации
-class UserCreate(BaseModel):
+# Описание схемы данных
+class UserRegister(BaseModel):
     username: str
     email: str
     password: str
 
 
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
 @router.post("/register")
-async def register(user: UserCreate, db: Session = Depends(get_db)):
+async def register(user: UserRegister, db: Session = Depends(get_db)):
     hashed_password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
     new_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
 
@@ -28,11 +33,8 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     await db.refresh(new_user)
     return {"message": "User created"}
 
-class UserLogin(BaseModel):
-    username: str
-    password: str
 
-@router.post("/auth/login")
+@router.post("/login")
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     user_in_db = await db.execute(User.__table__.select().where(User.username == user.username))
     user_in_db = user_in_db.scalar()
