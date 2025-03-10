@@ -11,13 +11,15 @@ services:
 #      - matchmaking_service
 #      - game_server
 
-#  auth_service:
-#    build: ./services/auth_service
-#    container_name: otus_auth_service
-#    environment:
-#      - DATABASE_URL=postgres://user:password@db:5432/auth_db
-#    depends_on:
-#      - db
+  auth_service:
+    build: ./services/auth_service
+    container_name: otus_auth_service
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db/auth_db
+    ports:
+      - "8001:8001"
 #
 #  matchmaking_service:
 #    build: ./services/matchmaking_service
@@ -53,16 +55,11 @@ services:
 #      - db
 
   db:
-    image: postgres:latest
-    container_name: otus_db
+    image: postgres:13
+    container_name: otus_postgres
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: otus_space_battle
+      POSTGRES_DB: auth_db
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
