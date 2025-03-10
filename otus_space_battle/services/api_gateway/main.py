@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import httpx
 
-app = FastAPI(title="Otus Space Battle API Gateway")
+app = FastAPI(title="Otus Space Battle API Gateway", docs_url="/docs", openapi_url="/openapi.json")
 
 # URL других сервисов внутри Docker-сети
 AUTH_SERVICE_URL = "http://auth_service:8001"
