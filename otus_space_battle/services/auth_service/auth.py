@@ -32,7 +32,7 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
-@router.post("/login")
+@router.post("/auth/login")
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     user_in_db = await db.execute(User.__table__.select().where(User.username == user.username))
     user_in_db = user_in_db.scalar()
