@@ -2,7 +2,7 @@ fastapi
 uvicorn
 pydantic
 bcrypt
-jwt
+pyjwt
 asyncpg
 sqlalchemy
 httpx
