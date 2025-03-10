@@ -27,3 +27,18 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     await db.commit()
     await db.refresh(new_user)
     return {"message": "User created"}
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+@router.post("/login")
+async def login(user: UserLogin, db: Session = Depends(get_db)):
+    user_in_db = await db.execute(User.__table__.select().where(User.username == user.username))
+    user_in_db = user_in_db.scalar()
+
+    if not user_in_db or not bcrypt.checkpw(user.password.encode(), user_in_db.hashed_password.encode()):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+
+    token = jwt.encode({"user_id": user_in_db.id}, SECRET_KEY, algorithm="HS256")
+    return {"access_token": token}
