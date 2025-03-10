@@ -23,10 +23,12 @@ class UserRegister(BaseModel):
     email: str
     password: str
 
-
 class UserLogin(BaseModel):
     username: str
     password: str
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 def create_access_token(user_id: int):
     expiration = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -86,8 +88,8 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 @router.post("/refresh")
-async def refresh_token(refresh_token: str):
-    payload = verify_refresh_token(refresh_token)
+async def refresh_token(request: RefreshTokenRequest):
+    payload = verify_refresh_token(request.refresh_token)
     new_access_token = create_access_token(payload["user_id"])
     return {"access_token": new_access_token}
 
