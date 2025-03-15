@@ -9,9 +9,14 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     volumes:
-      - ./otus_space_battle/services/database_service/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./otus_space_battle/services/database_service:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d main_db"]
+      interval: 5s
+      retries: 5
+      timeout: 3s
 
   api_gateway:
     build: ./services/api_gateway
@@ -28,9 +33,10 @@ services:
     container_name: otus_auth_service
     restart: always
     depends_on:
-      - database_service
+      database_service:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://user:password@db/main_db
+      DATABASE_URL: postgresql://user:password@database_service/main_db
     ports:
       - "8001:8001"
 
@@ -39,12 +45,12 @@ services:
     container_name: otus_matchmaking_service
     restart: always
     depends_on:
-      - database_service
+      database_service:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://user:password@db/main_db
+      DATABASE_URL: postgresql://user:password@database_service/main_db
     ports:
       - "8002:8002"
-
 
 volumes:
   pgdata:
