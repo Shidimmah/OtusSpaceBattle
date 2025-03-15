@@ -15,9 +15,19 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@db/auth_db
+      - DATABASE_URL=postgresql+asyncpg://user:password@db/main_db
     ports:
       - "8001:8001"
+
+  matchmaking_service:
+    build: ./services/matchmaking_service
+    container_name: otus_matchmaking_service
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db/main_db
+    ports:
+      - "8002:8002"
 
   db:
     image: postgres:13
@@ -25,7 +35,7 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: auth_db
+      POSTGRES_DB: main_db
     ports:
       - "5432:5432"
     volumes:

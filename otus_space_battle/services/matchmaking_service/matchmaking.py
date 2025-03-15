@@ -1,0 +1,44 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from models import Match
+from database import get_db
+from datetime import datetime
+
+router = APIRouter()
+
+
+@router.post("/find_match")
+async def find_match(payload: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user_id = payload["user_id"]
+
+    # Ищем существующий матч, где ещё нет второго игрока
+    existing_match = db.query(Match).filter(Match.status == "waiting").first()
+
+    if existing_match:
+        existing_match.player2_id = user_id
+        existing_match.status = "in_progress"
+        db.commit()
+        return {"message": "Match started", "match_id": existing_match.id}
+
+    # Создаём новый матч, если свободного нет
+    new_match = Match(player1_id=user_id)
+    db.add(new_match)
+    db.commit()
+    return {"message": "Waiting for opponent", "match_id": new_match.id}
+
+@router.post("/finish_match")
+async def finish_match(match_id: int, winner_id: int, db: Session = Depends(get_db)):
+    match = db.query(Match).filter(Match.id == match_id).first()
+
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    if match.status != "in_progress":
+        raise HTTPException(status_code=400, detail="Match already finished")
+
+    match.winner_id = winner_id
+    match.end_time = datetime.utcnow()
+    match.status = "finished"
+    db.commit()
+
+    return {"message": "Match finished", "winner_id": winner_id}

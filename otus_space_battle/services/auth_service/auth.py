@@ -46,18 +46,18 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
         payload = decode(token, SECRET_KEY, algorithms=["HS256"])
         return payload
     except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
+        raise HTTPException(status_code=401, detail="Токен ситёк")
     except InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Неверный токен")
 
 def verify_refresh_token(refresh_token: str):
     try:
         payload = decode(refresh_token, REFRESH_SECRET_KEY, algorithms=["HS256"])
         return payload
     except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Refresh token expired")
+        raise HTTPException(status_code=401, detail="Рефреш токен истёк")
     except InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        raise HTTPException(status_code=401, detail="Неверный рефреш токен")
 
 
 @router.post("/register")
@@ -68,7 +68,7 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-    return {"message": "User created"}
+    return {"message": "Пользователь создан"}
 
 
 @router.post("/login")
@@ -77,10 +77,10 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     user_in_db = result.scalars().first()
 
     if not user_in_db:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Неверные логин/пароль")
 
     if not bcrypt.checkpw(user.password.encode(), user_in_db.hashed_password.encode()):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Неверные логин/пароль")
 
     access_token = create_access_token(user_in_db.id)
     refresh_token = create_refresh_token(user_in_db.id)
@@ -95,4 +95,4 @@ async def refresh_token(request: RefreshTokenRequest):
 
 @router.get("/protected")
 async def protected_route(payload: dict = Depends(verify_token)):
-    return {"message": "You have access!", "user_id": payload["user_id"]}
+    return {"message": "Доступ получен!", "user_id": payload["user_id"]}
