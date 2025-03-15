@@ -4,15 +4,25 @@ from models import Match
 from datetime import datetime
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import decode, ExpiredSignatureError, InvalidTokenError
+import time
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 DATABASE_URL = "postgresql+asyncpg://user:password@database_service/main_db"
 
 engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 
+# 🔄 Повторяем подключение 10 раз с интервалом в 5 секунд
+@retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
+async def wait_for_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(lambda c: c.execute("SELECT 1"))
+
 async def get_db():
+    await wait_for_db()  # Ждём, пока БД будет доступна
     async with SessionLocal() as session:
         yield session
 
