@@ -15,21 +15,37 @@ services:
     ports:
       - "5432:5432"
 
+  api_gateway:
+    build: ./services/api_gateway
+    container_name: otus_api_gateway
+    restart: always
+    depends_on:
+      - auth_service
+      - matchmaking_service
+    ports:
+      - "80:80"  # ✅ Теперь все запросы на 80-й порт будут идти через API Gateway
+
   auth_service:
     build: ./services/auth_service
     container_name: otus_auth_service
+    restart: always
     depends_on:
       - db
     environment:
       DATABASE_URL: postgresql://user:password@db/main_db
+    ports:
+      - "8001:8001"
 
   matchmaking_service:
     build: ./services/matchmaking_service
     container_name: otus_matchmaking_service
+    restart: always
     depends_on:
       - db
     environment:
       DATABASE_URL: postgresql://user:password@db/main_db
+    ports:
+      - "8002:8002"
 
 volumes:
   pgdata:
