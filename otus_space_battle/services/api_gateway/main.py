@@ -1,62 +1,47 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, Request, Depends, HTTPException
 import httpx
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jwt import decode, ExpiredSignatureError, InvalidTokenError
-from pydantic import BaseModel
+import jwt
 
-app = FastAPI(title="Otus Space Battle API Gateway")
+app = FastAPI()
 
 AUTH_SERVICE_URL = "http://auth_service:8001"
+MATCHMAKING_SERVICE_URL = "http://matchmaking_service:8002"
 
-security = HTTPBearer()
+SECRET_KEY = "your_secret_key"  # ❗ Должен совпадать с ключом из `auth_service`
 
-SECRET_KEY = "SECRET123"
+async def verify_token(request: Request):
+    authorization: str = request.headers.get("Authorization")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
 
-# Функция проверки JWT-токена
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
+    token = authorization.split(" ")[1]
+
     try:
-        payload = decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload
-    except ExpiredSignatureError:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload  # ✅ Возвращаем payload токена (например, user_id)
+    except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except InvalidTokenError:
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-# ---- Эндпоинты API Gateway ----
+async def proxy_request(target_url: str, request: Request):
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method=request.method,
+            url=target_url,
+            headers=request.headers.raw,
+            content=await request.body()
+        )
+    return response.json()
 
-class UserRegister(BaseModel):
-    username: str
-    email: str
-    password: str
+@app.api_route("/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_auth(path: str, request: Request):
+    return await proxy_request(f"{AUTH_SERVICE_URL}/{path}", request)
 
-class UserLogin(BaseModel):
-    username: str
-    password: str
+@app.api_route("/matchmaking/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_matchmaking(path: str, request: Request, token: dict = Depends(verify_token)):
+    return await proxy_request(f"{MATCHMAKING_SERVICE_URL}/{path}", request)
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
-
-@app.post("/auth/register")
-async def register_user(user: UserRegister):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(f"{AUTH_SERVICE_URL}/auth/register", json=user.dict())
-    return response.json()
-
-@app.post("/auth/login")
-async def login_user(user: UserLogin):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(f"{AUTH_SERVICE_URL}/auth/login", json=user.dict())
-    return response.json()
-
-@app.post("/auth/refresh")
-async def refresh_token(refresh_token: str):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(f"{AUTH_SERVICE_URL}/auth/refresh", json={"refresh_token": refresh_token})
-    return response.json()
-
-# Прокси-запрос с проверкой авторизации
-@app.get("/protected")
-async def protected_route(payload: dict = Depends(verify_token)):
-    return {"message": "You have access!", "user_id": payload["user_id"]}
