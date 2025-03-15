@@ -1,12 +1,1 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase
-from database_service.models import Base
-
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False)
-    email = Column(String, unique=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+from services.database_service.models import User  # Теперь берём из database_service
