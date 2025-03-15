@@ -28,7 +28,7 @@ services:
     container_name: otus_auth_service
     restart: always
     depends_on:
-      - db
+      - database_service
     environment:
       DATABASE_URL: postgresql://user:password@db/main_db
     ports:
@@ -39,7 +39,7 @@ services:
     container_name: otus_matchmaking_service
     restart: always
     depends_on:
-      - db
+      - database_service
     environment:
       DATABASE_URL: postgresql://user:password@db/main_db
     ports:
