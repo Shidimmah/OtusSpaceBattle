@@ -45,9 +45,9 @@ async def proxy_request(target_url: str, request: Request):
 
 @app.api_route("/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_auth(path: str, request: Request):
-    print(f"🔍 API Gateway проксирует запрос на: {AUTH_SERVICE_URL}/{path}")
-    return await proxy_request(f"{AUTH_SERVICE_URL}/{path}", request)
-
+    target_url = f"{AUTH_SERVICE_URL}/auth/{path}"
+    print(f"🔍 API Gateway проксирует запрос на: {target_url}")
+    return await proxy_request(target_url, request)
 
 @app.api_route("/matchmaking/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_matchmaking(path: str, request: Request, token: dict = Depends(verify_token)):
