@@ -3,8 +3,25 @@ from sqlalchemy.orm import Session
 from models import Match
 from database import get_db
 from datetime import datetime
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jwt import decode, ExpiredSignatureError, InvalidTokenError
 
 router = APIRouter()
+
+security = HTTPBearer()
+SECRET_KEY = "SECRET123"
+
+
+# Проверка токена
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        payload = decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 @router.post("/find_match")
@@ -25,6 +42,7 @@ async def find_match(payload: dict = Depends(verify_token), db: Session = Depend
     db.add(new_match)
     db.commit()
     return {"message": "Waiting for opponent", "match_id": new_match.id}
+
 
 @router.post("/finish_match")
 async def finish_match(match_id: int, winner_id: int, db: Session = Depends(get_db)):
