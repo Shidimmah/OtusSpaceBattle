@@ -23,7 +23,7 @@ services:
       - auth_service
       - matchmaking_service
     ports:
-      - "80:80"  # ✅ Теперь все запросы на 80-й порт будут идти через API Gateway
+      - "80:80"
 
   auth_service:
     build: ./services/auth_service

@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request, Depends, HTTPException
+from pydantic import BaseModel
 import httpx
 import jwt
+import uvicorn
 
 app = FastAPI()
 
@@ -8,6 +10,13 @@ AUTH_SERVICE_URL = "http://auth_service:8001"
 MATCHMAKING_SERVICE_URL = "http://matchmaking_service:8002"
 
 SECRET_KEY = "your_secret_key"  # ❗ Должен совпадать с ключом из `auth_service`
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class UserRegister(UserLogin):
+    email: str
 
 async def verify_token(request: Request):
     authorization: str = request.headers.get("Authorization")
@@ -18,7 +27,7 @@ async def verify_token(request: Request):
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload  # ✅ Возвращаем payload токена (например, user_id)
+        return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
@@ -45,3 +54,6 @@ async def proxy_matchmaking(path: str, request: Request, token: dict = Depends(v
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=80)
