@@ -9,10 +9,10 @@ class Match(Base):
     __tablename__ = "matches"
 
     id = Column(Integer, primary_key=True, index=True)
-    player1_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    player2_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    player1_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    player2_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     start_time = Column(DateTime, default=func.now())
     end_time = Column(DateTime, nullable=True)
-    winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    status = Column(String, default="waiting")  # waiting, in_progress, finished
+    winner_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    status = Column(String, default="waiting")
     is_ranked = Column(Boolean, default=True)
