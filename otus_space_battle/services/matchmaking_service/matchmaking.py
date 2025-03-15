@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
+from sqlalchemy.future import select
 from models import Match
 from datetime import datetime
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -45,23 +46,27 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 
 
 @router.post("/find_match")
-async def find_match(payload: dict = Depends(verify_token), db: Session = Depends(get_db)):
+async def find_match(payload: dict = Depends(verify_token), db: AsyncSession = Depends(get_db)):
     user_id = payload["user_id"]
 
     # Ищем существующий матч, где ещё нет второго игрока
-    existing_match = db.query(Match).filter(Match.status == "waiting").first()
+    stmt = select(Match).where(Match.status == "waiting")
+    result = await db.execute(stmt)
+    existing_match = result.scalars().first()
 
     if existing_match:
         existing_match.player2_id = user_id
         existing_match.status = "in_progress"
-        db.commit()
-        return {"message": "Match started", "match_id": existing_match.id}
+        await db.commit()
+        await db.refresh(existing_match)
+        return {"message": "Матч начат.", "match_id": existing_match.id}
 
     # Создаём новый матч, если свободного нет
-    new_match = Match(player1_id=user_id)
+    new_match = Match(player1_id=user_id, status="waiting")
     db.add(new_match)
-    db.commit()
-    return {"message": "Waiting for opponent", "match_id": new_match.id}
+    await db.commit()
+    await db.refresh(new_match)
+    return {"message": "Ожидание оппонента. ", "match_id": new_match.id}
 
 
 @router.post("/finish_match")
