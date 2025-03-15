@@ -10,10 +10,11 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - type: bind
-        source: ./init.sql
+        source: /root/OtusSpaceBattle/otus_space_battle/init.sql
         target: /docker-entrypoint-initdb.d/init.sql
         bind:
           create_host_path: false
+
     ports:
       - "5432:5432"
     healthcheck:
