@@ -4,12 +4,8 @@ from jwt import decode, ExpiredSignatureError, InvalidTokenError
 import httpx
 from matchmaking import router as matchmaking_router
 import asyncio
-from database import init_db
 
-async def startup_event():
-    await init_db()
-
-app = FastAPI(title="Matchmaking Service", on_startup=[startup_event])
+app = FastAPI(title="Matchmaking Service")
 
 app.include_router(matchmaking_router, prefix="/matchmaking")
 
