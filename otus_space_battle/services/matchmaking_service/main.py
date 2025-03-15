@@ -24,3 +24,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 app.include_router(matchmaking_router, prefix="/matchmaking")
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
