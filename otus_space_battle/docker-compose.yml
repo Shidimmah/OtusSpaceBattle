@@ -1,13 +1,19 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  api_gateway:
-    build: ./services/api_gateway
-    container_name: otus_api_gateway
+  db:
+    image: postgres:14
+    container_name: otus_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: main_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database_service/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "80:8000"
-    depends_on:
-      - auth_service
+      - "5432:5432"
 
   auth_service:
     build: ./services/auth_service
@@ -15,9 +21,7 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@db/main_db
-    ports:
-      - "8001:8001"
+      DATABASE_URL: postgresql://user:password@db/main_db
 
   matchmaking_service:
     build: ./services/matchmaking_service
@@ -25,22 +29,7 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@db/main_db
-    ports:
-      - "8002:8002"
-
-  db:
-    image: postgres:13
-    container_name: otus_postgres
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: main_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      DATABASE_URL: postgresql://user:password@db/main_db
 
 volumes:
   pgdata:
-
