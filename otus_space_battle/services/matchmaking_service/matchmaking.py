@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 from models import Match
 from datetime import datetime
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -17,8 +18,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, clas
 
 @retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
 async def wait_for_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(lambda c: c.execute("SELECT 1"))
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
 
 async def get_db():
     await wait_for_db()  # Ждём, пока БД будет доступна
