@@ -45,11 +45,11 @@ async def proxy_request(target_url: str, request: Request):
 
 @app.api_route("/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_auth(path: str, request: Request):
-    return await proxy_request(f"{AUTH_SERVICE_URL}/{path}", request)
+    return await proxy_request(f"{AUTH_SERVICE_URL}/auth/{path}", request)
 
 @app.api_route("/matchmaking/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_matchmaking(path: str, request: Request, token: dict = Depends(verify_token)):
-    return await proxy_request(f"{MATCHMAKING_SERVICE_URL}/{path}", request)
+    return await proxy_request(f"{MATCHMAKING_SERVICE_URL}/matchmaking/{path}", request)
 
 @app.get("/health")
 async def health_check():
