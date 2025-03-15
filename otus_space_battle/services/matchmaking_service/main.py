@@ -3,13 +3,20 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import decode, ExpiredSignatureError, InvalidTokenError
 import httpx
 from matchmaking import router as matchmaking_router
+import asyncio
+from database import init_db
 
-app = FastAPI(title="Matchmaking Service")
+async def startup_event():
+    await init_db()
+
+app = FastAPI(title="Matchmaking Service", on_startup=[startup_event])
+
+app.include_router(matchmaking_router, prefix="/matchmaking")
 
 SECRET_KEY = "SECRET123"
 security = HTTPBearer()
 
-# Проверка токена
+
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
