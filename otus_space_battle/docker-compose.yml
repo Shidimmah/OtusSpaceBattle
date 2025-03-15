@@ -10,13 +10,17 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./services/database_service/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./services/database_service/entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
     ports:
       - "5432:5432"
+    entrypoint: ["/bin/bash", "/docker-entrypoint-initdb.d/entrypoint.sh"]
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d main_db" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d main_db"]
       interval: 5s
       retries: 5
       timeout: 3s
+
 
 
   api_gateway:
