@@ -15,7 +15,6 @@ DATABASE_URL = "postgresql+asyncpg://user:password@database_service/main_db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 
-# 🔄 Повторяем подключение 10 раз с интервалом в 5 секунд
 @retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
 async def wait_for_db():
     async with engine.begin() as conn:
@@ -80,3 +79,7 @@ async def finish_match(match_id: int, winner_id: int, db: Session = Depends(get_
     db.commit()
 
     return {"message": "Match finished", "winner_id": winner_id}
+
+@router.get("/health")
+async def health_check():
+    return {"status": "ok"}

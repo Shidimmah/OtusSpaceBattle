@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     volumes:
-      - ./otus_space_battle/services/database_service:/docker-entrypoint-initdb.d
+      - ./otus_space_battle/services/database_service/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
