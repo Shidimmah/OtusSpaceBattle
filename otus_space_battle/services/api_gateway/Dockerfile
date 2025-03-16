@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Копируем зависимости
-COPY requirements.txt .
+COPY otus_space_battle/services/api_gateway/requirements.txt .
 
 # Устанавливаем зависимости
 RUN pip install -r requirements.txt
