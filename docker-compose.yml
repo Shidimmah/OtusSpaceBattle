@@ -141,13 +141,14 @@ services:
       - app_network
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
     environment:
       - node.name=elasticsearch
       - cluster.name=es-docker-cluster
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - discovery.type=single-node
+      - xpack.security.enabled=false
     ulimits:
       memlock:
         soft: -1
@@ -158,7 +159,7 @@ services:
       - app_network
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:7.9.3-arm64
+    image: docker.elastic.co/logstash/logstash:8.12.2
     volumes:
       - ./logstash/config:/usr/share/logstash/config
       - ./logstash/pipeline:/usr/share/logstash/pipeline
@@ -175,9 +176,9 @@ services:
       - app_network
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.9.3-arm64
+    image: docker.elastic.co/kibana/kibana:8.12.2
     environment:
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
       - "5601:5601"
     depends_on:
