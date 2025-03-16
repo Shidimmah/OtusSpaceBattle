@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base  # Подключаем наши модели
+from common.models import Base  # Подключаем наши модели
 
 DATABASE_URL = "postgresql://user:password@database_service/main_db"
 engine = create_engine(DATABASE_URL)

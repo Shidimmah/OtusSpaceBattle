@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from sqlalchemy.future import select
-from models import Match
+from common.models import Match
 from datetime import datetime
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import decode, ExpiredSignatureError, InvalidTokenError

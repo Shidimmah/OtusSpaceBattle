@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from auth import router as auth_router
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from models import Base  # Подключаем модели из единого источника
 
 DATABASE_URL = "postgresql+asyncpg://user:password@database_service/main_db"
 

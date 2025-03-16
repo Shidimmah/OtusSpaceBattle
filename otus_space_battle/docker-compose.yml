@@ -10,6 +10,7 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./common:/app/common
     ports:
       - "5432:5432"
     healthcheck:
@@ -48,7 +49,7 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - ./database_service:/app/database_service
+      - ./common:/app/common
 
   matchmaking_service:
     build: ./services/matchmaking_service
@@ -62,7 +63,7 @@ services:
     ports:
       - "8002:8002"
     volumes:
-      - ./database_service:/app/database_service
+      - ./common:/app/common
 
 volumes:
   pgdata:

@@ -4,14 +4,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from sqlalchemy.sql import text
-from models import User
+from common.models import User
 import bcrypt
 from jwt import encode, decode, ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
-import time
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import OperationalError
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 DATABASE_URL = "postgresql+asyncpg://user:password@database_service/main_db"
