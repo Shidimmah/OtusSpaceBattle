@@ -2,7 +2,7 @@ import sys
 import os
 
 # Добавляем путь к common в sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'common'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'common')))
 
 from models import Base
 from sqlalchemy import create_engine
