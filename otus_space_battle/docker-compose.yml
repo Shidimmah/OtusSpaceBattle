@@ -24,7 +24,9 @@ services:
     depends_on:
       database_service:
         condition: service_healthy
-    command: ["python", "init_db.py"]  # Запускаем создание таблиц
+    command: ["python", "init_db.py"]
+    volumes:
+      - ./common:/app/common
 
   api_gateway:
     build: ./services/api_gateway
@@ -33,8 +35,11 @@ services:
     depends_on:
       - auth_service
       - matchmaking_service
+      - fleet_management_service
     ports:
       - "80:80"
+    volumes:
+      - ./common:/app/common
 
   auth_service:
     build: ./services/auth_service
@@ -42,7 +47,7 @@ services:
     restart: always
     depends_on:
       database_migrations:
-        condition: service_completed_successfully  # Ждём создания таблиц
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://user:password@database_service/main_db
     ports:
@@ -61,6 +66,22 @@ services:
       DATABASE_URL: postgresql://user:password@database_service/main_db
     ports:
       - "8002:8002"
+    volumes:
+      - ./common:/app/common
+
+  fleet_management_service:
+    build: ./services/fleet_management_service
+    container_name: otus_fleet_management_service
+    restart: always
+    depends_on:
+      database_migrations:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://user:password@database_service/main_db
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./common:/app/common
 
 volumes:
   pgdata:
