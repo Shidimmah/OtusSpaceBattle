@@ -10,7 +10,6 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./common:/app/common
     ports:
       - "5432:5432"
     healthcheck:
@@ -26,8 +25,6 @@ services:
       database_service:
         condition: service_healthy
     command: ["python", "init_db.py"]  # Запускаем создание таблиц
-    volumes:
-      - ./common:/app/common
 
   api_gateway:
     build: ./services/api_gateway
@@ -64,8 +61,6 @@ services:
       DATABASE_URL: postgresql://user:password@database_service/main_db
     ports:
       - "8002:8002"
-    volumes:
-      - ./common:/app/common
 
 volumes:
   pgdata:

@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from sqlalchemy.sql import text
-from common.models import User
+from models import User
 import bcrypt
 from jwt import encode, decode, ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
