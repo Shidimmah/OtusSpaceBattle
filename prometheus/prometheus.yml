@@ -3,26 +3,22 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'prometheus'
+  - job_name: "api_gateway"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["api_gateway:9000"]
 
-  - job_name: 'api_gateway'
+  - job_name: "battle_mechanics"
     static_configs:
-      - targets: ['api_gateway:9000']
+      - targets: ["battle_mechanics:9001"]
 
-  - job_name: 'battle_mechanics'
+  - job_name: "resource_management"
     static_configs:
-      - targets: ['battle_mechanics:9001']
+      - targets: ["resource_management:9002"]
 
-  - job_name: 'resource_management'
+  - job_name: "ranking"
     static_configs:
-      - targets: ['resource_management:9002']
+      - targets: ["ranking:9003"]
 
-  - job_name: 'ranking'
+  - job_name: "analytics"
     static_configs:
-      - targets: ['ranking:9003']
-
-  - job_name: 'analytics'
-    static_configs:
-      - targets: ['analytics:9004'] 
+      - targets: ["analytics:9004"] 
