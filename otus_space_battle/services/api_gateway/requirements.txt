@@ -3,3 +3,4 @@ httpx
 uvicorn
 pyjwt
 pydantic
+prometheus_client
