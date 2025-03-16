@@ -1,6 +1,12 @@
+import sys
+import os
+
+# Добавляем путь к common в sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'common'))
+
+from models import Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from common.models import Base  # Подключаем наши модели
 
 DATABASE_URL = "postgresql://user:password@database_service/main_db"
 engine = create_engine(DATABASE_URL)

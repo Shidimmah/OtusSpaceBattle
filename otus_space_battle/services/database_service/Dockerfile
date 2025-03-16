@@ -4,9 +4,6 @@ FROM python:3.10
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем common
-COPY ../common /app/common
-
 # Копируем файлы проекта
 COPY . .
 
