@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "main.py"] 
+CMD ["python", "-m", "otus_space_battle.services.ranking"] 

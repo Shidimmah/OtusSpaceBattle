@@ -4,13 +4,13 @@ services:
   battle_mechanics:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: otus_space_battle/services/battle_mechanics/Dockerfile
     ports:
       - "8001:8001"
     environment:
       - SERVICE_NAME=battle_mechanics
       - METRICS_PORT=8001
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/space_battle
+      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
     depends_on:
       - db
       - prometheus
@@ -18,13 +18,13 @@ services:
   resource_management:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: otus_space_battle/services/resource_management/Dockerfile
     ports:
       - "8002:8002"
     environment:
       - SERVICE_NAME=resource_management
       - METRICS_PORT=8002
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/space_battle
+      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
     depends_on:
       - db
       - prometheus
@@ -32,13 +32,13 @@ services:
   ranking:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: otus_space_battle/services/ranking/Dockerfile
     ports:
       - "8003:8003"
     environment:
       - SERVICE_NAME=ranking
       - METRICS_PORT=8003
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/space_battle
+      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
     depends_on:
       - db
       - prometheus
@@ -46,28 +46,27 @@ services:
   analytics:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: otus_space_battle/services/analytics/Dockerfile
     ports:
       - "8004:8004"
     environment:
       - SERVICE_NAME=analytics
       - METRICS_PORT=8004
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/space_battle
+      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
     depends_on:
       - db
       - prometheus
-      - elasticsearch
 
   api_gateway:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: otus_space_battle/services/api_gateway/Dockerfile
     ports:
       - "8000:8000"
     environment:
       - SERVICE_NAME=api_gateway
       - METRICS_PORT=8000
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/space_battle
+      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
     depends_on:
       - battle_mechanics
       - resource_management
@@ -75,42 +74,51 @@ services:
       - analytics
 
   prometheus:
-    image: prom/prometheus:v2.45.0
+    image: prom/prometheus:latest
     volumes:
-      - ./monitoring/prometheus:/etc/prometheus
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
 
   grafana:
-    image: grafana/grafana:10.0.0
+    image: grafana/grafana:latest
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - grafana_data:/var/lib/grafana
     environment:
+      - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
     environment:
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.17.0
+    image: docker.elastic.co/kibana/kibana:7.9.3
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
     depends_on:
       - elasticsearch
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:7.17.0
+    image: docker.elastic.co/logstash/logstash:7.9.3
     volumes:
       - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
     depends_on:
@@ -119,9 +127,9 @@ services:
   db:
     image: postgres:15
     environment:
-      - POSTGRES_DB=space_battle
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=space_battle
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

@@ -1,5 +1,5 @@
 # Используем базовый образ Python
-FROM python:3.10
+FROM python:3.11-slim
 
 # Устанавливаем рабочую директорию в контейнере
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Устанавливаем зависимости
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Копируем код сервиса
 COPY . .
@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 80
 
 # Запускаем FastAPI с Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["python", "-m", "otus_space_battle.services.api_gateway"]
