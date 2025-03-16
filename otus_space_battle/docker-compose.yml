@@ -1,87 +1,81 @@
 version: '3.8'
 
 services:
-  database_service:
-    image: postgres:14
-    restart: always
+  database:
+    image: postgres:15
     environment:
-      POSTGRES_DB: main_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      POSTGRES_DB: main_db
     ports:
       - "5432:5432"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d main_db" ]
-      interval: 5s
-      retries: 5
-      timeout: 3s
-
-  database_migrations:
-    build: ./services/database_service
-    container_name: otus_database_migrations
-    depends_on:
-      database_service:
-        condition: service_healthy
-    command: ["python", "init_db.py"]
     volumes:
-      - ./common:/app/common
+      - postgres_data:/var/lib/postgresql/data
 
-  api_gateway:
-    build: ./services/api_gateway
-    container_name: otus_api_gateway
-    restart: always
-    depends_on:
-      - auth_service
-      - matchmaking_service
-      - fleet_management_service
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
-      - "80:80"
-    volumes:
-      - ./common:/app/common
-
-  auth_service:
-    build: ./services/auth_service
-    container_name: otus_auth_service
+      - "9090:9090"
     restart: always
-    depends_on:
-      database_migrations:
-        condition: service_completed_successfully
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     environment:
-      DATABASE_URL: postgresql://user:password@database_service/main_db
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
     ports:
-      - "8001:8001"
-    volumes:
-      - ./common:/app/common
-
-  matchmaking_service:
-    build: ./services/matchmaking_service
-    container_name: otus_matchmaking_service
-    restart: always
+      - "3000:3000"
     depends_on:
-      database_migrations:
-        condition: service_completed_successfully
-    environment:
-      DATABASE_URL: postgresql://user:password@database_service/main_db
-    ports:
-      - "8002:8002"
-    volumes:
-      - ./common:/app/common
-
-  fleet_management_service:
-    build: ./services/fleet_management_service
-    container_name: otus_fleet_management_service
+      - prometheus
     restart: always
-    depends_on:
-      database_migrations:
-        condition: service_completed_successfully
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
     environment:
-      DATABASE_URL: postgresql://user:password@database_service/main_db
-    ports:
-      - "8003:8000"
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
     volumes:
-      - ./common:/app/common
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    restart: always
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+      - "5000:5000"
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    restart: always
 
 volumes:
-  pgdata:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
