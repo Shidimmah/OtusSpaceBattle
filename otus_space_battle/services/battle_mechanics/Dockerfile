@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "-m", "otus_space_battle.services.battle_mechanics"] 
+CMD ["python", "otus_space_battle/services/battle_mechanics/main.py"] 

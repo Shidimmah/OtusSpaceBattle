@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "-m", "otus_space_battle.services.resource_management"] 
+CMD ["python", "otus_space_battle/services/resource_management/main.py"] 

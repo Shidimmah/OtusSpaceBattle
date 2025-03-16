@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 80
 
 # Запускаем FastAPI с Uvicorn
-CMD ["python", "-m", "otus_space_battle.services.api_gateway"]
+CMD ["python", "otus_space_battle/services/api_gateway/main.py"]

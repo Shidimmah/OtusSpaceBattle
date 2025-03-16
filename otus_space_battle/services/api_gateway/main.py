@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import httpx
 import jwt
 import uvicorn
+import os
 
 app = FastAPI()
 
@@ -57,5 +58,10 @@ async def proxy_auth(path: str, request: Request):
 async def health_check():
     return {"status": "ok"}
 
+@app.get("/")
+async def root():
+    return {"message": "API Gateway Service"}
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    port = int(os.getenv("METRICS_PORT", "9000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
