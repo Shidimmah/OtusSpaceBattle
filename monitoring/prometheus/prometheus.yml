@@ -5,23 +5,23 @@ global:
 scrape_configs:
   - job_name: 'battle_mechanics'
     static_configs:
-      - targets: ['battle_mechanics:8001']
+      - targets: ['battle_mechanics:9001']
 
   - job_name: 'resource_management'
     static_configs:
-      - targets: ['resource_management:8002']
+      - targets: ['resource_management:9002']
 
   - job_name: 'ranking'
     static_configs:
-      - targets: ['ranking:8003']
+      - targets: ['ranking:9003']
 
   - job_name: 'analytics'
     static_configs:
-      - targets: ['analytics:8004']
+      - targets: ['analytics:9004']
 
   - job_name: 'api_gateway'
     static_configs:
-      - targets: ['api_gateway:8000']
+      - targets: ['api_gateway:9000']
 
   - job_name: 'prometheus'
     static_configs:
