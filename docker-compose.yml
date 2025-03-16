@@ -14,6 +14,8 @@ services:
     depends_on:
       - db
       - prometheus
+    networks:
+      - app_network
 
   resource_management:
     build:
@@ -28,6 +30,8 @@ services:
     depends_on:
       - db
       - prometheus
+    networks:
+      - app_network
 
   ranking:
     build:
@@ -42,6 +46,8 @@ services:
     depends_on:
       - db
       - prometheus
+    networks:
+      - app_network
 
   analytics:
     build:
@@ -56,6 +62,8 @@ services:
     depends_on:
       - db
       - prometheus
+    networks:
+      - app_network
 
   api_gateway:
     build:
@@ -72,6 +80,8 @@ services:
       - resource_management
       - ranking
       - analytics
+    networks:
+      - app_network
 
   prometheus:
     image: prom/prometheus:latest
@@ -85,6 +95,8 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
       - "9090:9090"
+    networks:
+      - app_network
 
   grafana:
     image: grafana/grafana:latest
@@ -98,6 +110,39 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+    networks:
+      - app_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - app_network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.0
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+    networks:
+      - app_network
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=space_battle
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
@@ -115,31 +160,6 @@ services:
     networks:
       - app_network
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.9.3
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:7.9.3
-    volumes:
-      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
-    depends_on:
-      - elasticsearch
-
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=space_battle
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
   elasticsearch_setup:
     image: curlimages/curl:latest
     volumes:
@@ -154,4 +174,8 @@ volumes:
   prometheus_data:
   grafana_data:
   elasticsearch_data:
-  postgres_data: 
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge 
