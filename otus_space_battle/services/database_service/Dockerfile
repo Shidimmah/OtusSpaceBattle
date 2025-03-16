@@ -1,5 +1,5 @@
 # Используем Python 3.10
-FROM python:3.10
+FROM otus-common
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
