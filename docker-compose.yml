@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   nginx:
-    image: nginx:latest
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
       - "80:80"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
     depends_on:
       - api_gateway
       - battle_mechanics
@@ -103,58 +103,8 @@ services:
     networks:
       - app_network
 
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    expose:
-      - "9090"
-    networks:
-      - app_network
-
-  grafana:
-    image: grafana/grafana:latest
-    volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    expose:
-      - "3000"
-    depends_on:
-      - prometheus
-    networks:
-      - app_network
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.17.0
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    expose:
-      - "5601"
-    depends_on:
-      - elasticsearch
-    networks:
-      - app_network
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:7.17.0
-    volumes:
-      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
-    depends_on:
-      - elasticsearch
-    networks:
-      - app_network
-
   db:
-    image: postgres:15
+    image: postgres:13
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -164,38 +114,80 @@ services:
     networks:
       - app_network
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - cluster.routing.allocation.disk.threshold_enabled=true
-      - cluster.routing.allocation.disk.watermark.low=2gb
-      - cluster.routing.allocation.disk.watermark.high=1gb
-      - cluster.routing.allocation.disk.watermark.flood_stage=500mb
+  prometheus:
+    image: prom/prometheus:latest
     volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    expose:
-      - "9200"
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
     networks:
       - app_network
 
-  elasticsearch_setup:
-    image: curlimages/curl:latest
+  grafana:
+    image: grafana/grafana:latest
     volumes:
-      - ./scripts:/scripts
-    command: ["/bin/sh", "/scripts/setup_elasticsearch.sh"]
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - app_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=es-docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - app_network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.9.3
+    volumes:
+      - ./logstash/config:/usr/share/logstash/config
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     depends_on:
       - elasticsearch
     networks:
       - app_network
 
-volumes:
-  prometheus_data:
-  grafana_data:
-  elasticsearch_data:
-  postgres_data:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.9.3
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - app_network
 
 networks:
   app_network:
-    driver: bridge 
+    driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data: 
