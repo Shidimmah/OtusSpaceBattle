@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from .routes import game_router, player_router, analytics_router
 from .config import settings
 from common.monitoring import setup_monitoring
@@ -8,7 +9,12 @@ app = FastAPI(
     title="Space Battle API Gateway",
     docs_url="/docs",
     openapi_url="/openapi.json",
-    swagger_ui_parameters={"defaultModelsExpandDepth": -1}
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1,
+        "persistAuthorization": True,
+        "displayRequestDuration": True,
+        "syntaxHighlight.theme": "monokai"
+    }
 )
 
 # Настройка CORS
