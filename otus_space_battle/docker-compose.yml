@@ -26,6 +26,8 @@ services:
       database_service:
         condition: service_healthy
     command: ["python", "init_db.py"]  # Запускаем создание таблиц
+    volumes:
+      - ./common:/app/common
 
   api_gateway:
     build: ./services/api_gateway
