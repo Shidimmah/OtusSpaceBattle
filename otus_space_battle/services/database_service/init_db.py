@@ -7,9 +7,9 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
-    print("🛠 Создание таблиц в БД...")
+    print("Создание таблиц в БД...")
     Base.metadata.create_all(engine)
-    print("✅ Таблицы успешно созданы!")
+    print("Таблицы успешно созданы!")
 
 if __name__ == "__main__":
     init_db()
