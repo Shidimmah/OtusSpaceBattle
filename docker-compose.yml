@@ -2,109 +2,87 @@ version: '3.8'
 
 services:
   nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
+    image: nginx:1.25.3
     ports:
       - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
     depends_on:
       - api_gateway
-      - battle_mechanics
-      - resource_management
-      - ranking
-      - analytics
-    networks:
-      - app_network
-
-  battle_mechanics:
-    build:
-      context: .
-      dockerfile: otus_space_battle/services/battle_mechanics/Dockerfile
-    expose:
-      - "8001"
-      - "9001"
-    environment:
-      - SERVICE_NAME=battle_mechanics
-      - METRICS_PORT=9001
-      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
-    depends_on:
-      - db
-      - prometheus
-    networks:
-      - app_network
-
-  resource_management:
-    build:
-      context: .
-      dockerfile: otus_space_battle/services/resource_management/Dockerfile
-    expose:
-      - "8002"
-      - "9002"
-    environment:
-      - SERVICE_NAME=resource_management
-      - METRICS_PORT=9002
-      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
-    depends_on:
-      - db
-      - prometheus
-    networks:
-      - app_network
-
-  ranking:
-    build:
-      context: .
-      dockerfile: otus_space_battle/services/ranking/Dockerfile
-    expose:
-      - "8003"
-      - "9003"
-    environment:
-      - SERVICE_NAME=ranking
-      - METRICS_PORT=9003
-      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
-    depends_on:
-      - db
-      - prometheus
-    networks:
-      - app_network
-
-  analytics:
-    build:
-      context: .
-      dockerfile: otus_space_battle/services/analytics/Dockerfile
-    expose:
-      - "8004"
-      - "9004"
-    environment:
-      - SERVICE_NAME=analytics
-      - METRICS_PORT=9004
-      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
-    depends_on:
-      - db
-      - prometheus
     networks:
       - app_network
 
   api_gateway:
     build:
-      context: .
-      dockerfile: otus_space_battle/services/api_gateway/Dockerfile
-    expose:
-      - "8000"
-      - "9000"
+      context: ./otus_space_battle/services/api_gateway
+      dockerfile: Dockerfile
     environment:
-      - SERVICE_NAME=api_gateway
-      - METRICS_PORT=9000
-      - DB_URL=postgresql://postgres:postgres@db:5432/space_battle
+      - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
+      - BATTLE_MECHANICS_URL=http://battle_mechanics:8000
+      - RANKING_URL=http://ranking:8000
+      - ANALYTICS_URL=http://analytics:8000
     depends_on:
-      - battle_mechanics
       - resource_management
+      - battle_mechanics
       - ranking
       - analytics
     networks:
       - app_network
 
+  resource_management:
+    build:
+      context: ./otus_space_battle/services/resource_management
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=space_battle
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  battle_mechanics:
+    build:
+      context: ./otus_space_battle/services/battle_mechanics
+      dockerfile: Dockerfile
+    environment:
+      - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
+    depends_on:
+      - resource_management
+    networks:
+      - app_network
+
+  ranking:
+    build:
+      context: ./otus_space_battle/services/ranking
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=space_battle
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  analytics:
+    build:
+      context: ./otus_space_battle/services/analytics
+      dockerfile: Dockerfile
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - app_network
+
   db:
-    image: postgres:13
+    image: postgres:16.2
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -114,12 +92,39 @@ services:
     networks:
       - app_network
 
-  prometheus:
-    image: prom/prometheus
+  elasticsearch:
+    image: elasticsearch:8.12.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - app_network
+
+  kibana:
+    image: kibana:8.12.1
     ports:
-      - "9090:9090"
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - app_network
+
+  logstash:
+    image: logstash:8.12.1
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+    networks:
+      - app_network
+
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -129,60 +134,13 @@ services:
       - app_network
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.3.3
+    ports:
+      - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
     depends_on:
       - prometheus
-    networks:
-      - app_network
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    environment:
-      - node.name=elasticsearch
-      - cluster.name=es-docker-cluster
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - app_network
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:7.17.0
-    volumes:
-      - ./logstash/config:/usr/share/logstash/config
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-    ports:
-      - "5044:5044"
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
-      - "9600:9600"
-    environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-    depends_on:
-      - elasticsearch
-    networks:
-      - app_network
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.17.0
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
     networks:
       - app_network
 
@@ -192,6 +150,6 @@ networks:
 
 volumes:
   postgres_data:
+  elasticsearch_data:
   prometheus_data:
-  grafana_data:
-  elasticsearch_data: 
+  grafana_data: 

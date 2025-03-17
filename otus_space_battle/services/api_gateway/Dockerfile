@@ -5,16 +5,16 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Копируем зависимости
-COPY otus_space_battle/services/api_gateway/requirements.txt .
+COPY requirements.txt .
 
 # Устанавливаем зависимости
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем код сервиса
-COPY . .
+COPY src/ src/
 
 # Открываем порт
-EXPOSE 80
+EXPOSE 8000
 
 # Запускаем FastAPI с Uvicorn
-CMD ["python", "otus_space_battle/services/api_gateway/main.py"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
