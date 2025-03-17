@@ -7,13 +7,14 @@ from common.monitoring import setup_monitoring
 
 app = FastAPI(
     title="Space Battle API Gateway",
-    docs_url="/docs",
-    openapi_url="/openapi.json",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
     swagger_ui_parameters={
         "defaultModelsExpandDepth": -1,
         "persistAuthorization": True,
         "displayRequestDuration": True,
-        "syntaxHighlight.theme": "monokai"
+        "syntaxHighlight.theme": "monokai",
+        "url": "/api/openapi.json"  # Явно указываем URL для OpenAPI схемы
     }
 )
 
