@@ -13,7 +13,8 @@ app = FastAPI(
         "defaultModelsExpandDepth": -1,
         "persistAuthorization": True,
         "displayRequestDuration": True,
-        "syntaxHighlight.theme": "monokai"
+        "syntaxHighlight.theme": "monokai",
+        "url": "/api/openapi.json"
     }
 )
 
