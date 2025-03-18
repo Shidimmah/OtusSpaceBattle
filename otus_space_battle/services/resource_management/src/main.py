@@ -1,22 +1,26 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from dependency_injector.wiring import inject, Provide
 
+from .di.container import Container
+from .di.config import get_settings
 from .routes import ships
 
-app = FastAPI(
-    title="Resource Management Service",
-    description="Сервис управления игровыми ресурсами",
-    version="1.0.0"
-)
+def create_app() -> FastAPI:
+    # Создание приложения FastAPI
+    app = FastAPI(
+        title="Resource Management Service",
+        description="Сервис управления игровыми ресурсами",
+        version="1.0.0"
+    )
+    
+    # Создаем контейнер зависимостей
+    container = Container()
+    container.config.from_pydantic(get_settings())
+    container.wire(packages=[".routes"])
+    
+    # Регистрируем роуты
+    app.include_router(ships.router, prefix="/ships", tags=["ships"])
+    
+    return app
 
-# Настройка CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Подключаем роутеры
-app.include_router(ships.router, prefix="/ships", tags=["ships"]) 
+app = create_app() 

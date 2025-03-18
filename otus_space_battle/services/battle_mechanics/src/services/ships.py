@@ -6,14 +6,14 @@ import httpx
 from ..models.ships import ShipState, Vector2D, WeaponState, MoveCommand, FireCommand
 
 class ShipService:
-    """Сервис для управления кораблями в игре"""
+    # Сервис для управления кораблями в игре
     def __init__(self, resource_management_url: str):
         self.resource_management_url = resource_management_url
         self.ships: Dict[str, ShipState] = {}
         self.last_update = time.time()
 
     async def create_ship(self, template_id: str, player_id: str, position: Vector2D) -> ShipState:
-        """Создать корабль в игре на основе шаблона"""
+        # Создать корабль в игре на основе шаблона
         # Получаем шаблон корабля из сервиса управления ресурсами
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{self.resource_management_url}/ships/templates/{template_id}")
@@ -53,11 +53,11 @@ class ShipService:
         return ship
 
     def get_ship(self, ship_id: str) -> Optional[ShipState]:
-        """Получить состояние корабля"""
+        # Получить состояние корабля
         return self.ships.get(ship_id)
 
     def update_ship(self, ship_id: str, command: MoveCommand) -> Optional[ShipState]:
-        """Обновить состояние корабля на основе команды движения"""
+        # Обновить состояние корабля на основе команды движения
         ship = self.ships.get(ship_id)
         if not ship:
             return None
@@ -98,7 +98,7 @@ class ShipService:
         return ship
 
     def fire_weapon(self, ship_id: str, command: FireCommand) -> Optional[dict]:
-        """Выстрел из оружия корабля"""
+        # Выстрел из оружия корабля
         ship = self.ships.get(ship_id)
         if not ship or ship.is_destroyed:
             return None

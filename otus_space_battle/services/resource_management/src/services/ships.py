@@ -2,130 +2,137 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
+from structlog import BoundLogger
+from datetime import datetime
 
 from ..models.ships import ShipTemplate, ShipWeapon
 from ..schemas.ships import ShipTemplateCreate, ShipTemplateUpdate, WeaponCharacteristics
+from ..plugins.manager import PluginManager
+from ..plugins.scout_ship import ScoutShipPlugin
+from ..events.event_bus import EventBus
 
 class ShipService:
-    """Сервис для работы с шаблонами кораблей"""
+    # Сервис для работы с шаблонами кораблей
 
-    @staticmethod
-    def get_templates(db: Session) -> List[ShipTemplate]:
-        """Получить список всех шаблонов кораблей"""
+    def __init__(self, plugin_manager: PluginManager, logger: BoundLogger, event_bus: EventBus):
+        self.plugin_manager = plugin_manager
+        self.logger = logger
+        self.event_bus = event_bus
+        self._register_default_plugins()
+
+    def _register_default_plugins(self):
+        # Регистрирует предустановленные плагины
+        self.plugin_manager.register_plugin(ScoutShipPlugin)
+
+    def get_templates(self, db: Session) -> List[ShipTemplate]:
+        # Получить список всех шаблонов кораблей
+        self.logger.info("getting_ship_templates")
         return db.query(ShipTemplate).all()
 
-    @staticmethod
-    def get_template(db: Session, template_id: str) -> Optional[ShipTemplate]:
-        """Получить шаблон корабля по ID"""
+    def get_template(self, db: Session, template_id: str) -> Optional[ShipTemplate]:
+        # Получить шаблон корабля по ID
+        self.logger.info("getting_ship_template", template_id=template_id)
         return db.query(ShipTemplate).filter(ShipTemplate.id == template_id).first()
 
-    @staticmethod
-    def create_template(db: Session, template: ShipTemplateCreate) -> ShipTemplate:
-        """Создать новый шаблон корабля"""
-        try:
-            # Создаем шаблон корабля
-            db_template = ShipTemplate(
-                id=template.id,
-                name=template.name,
-                description=template.description,
-                max_speed=template.characteristics.max_speed,
-                acceleration=template.characteristics.acceleration,
-                rotation_speed=template.characteristics.rotation_speed,
-                fuel_capacity=template.characteristics.fuel_capacity,
-                fuel_consumption=template.characteristics.fuel_consumption,
-                hull_strength=template.characteristics.hull_strength,
-                shield_strength=template.characteristics.shield_strength,
-                length=template.size[0],
-                width=template.size[1]
-            )
-            db.add(db_template)
+    async def create_template(self, db: Session, template: ShipTemplateCreate) -> ShipTemplate:
+        # Создать новый шаблон корабля
+        self.logger.info("creating_ship_template", template_data=template.dict())
+        db_template = ShipTemplate(**template.dict())
+        db.add(db_template)
+        db.commit()
+        db.refresh(db_template)
+        
+        # Отправляем событие создания шаблона
+        await self.event_bus.publish(
+            "template_created",
+            {
+                "template_id": db_template.id,
+                "name": db_template.name,
+                "type": db_template.type,
+                "created_at": db_template.created_at.isoformat()
+            }
+        )
+        
+        return db_template
 
-            # Добавляем оружие
-            for weapon in template.weapons:
-                db_weapon = ShipWeapon(
-                    ship_template=db_template,
-                    type=weapon.type,
-                    damage=weapon.damage,
-                    cooldown=weapon.cooldown,
-                    ammunition=weapon.ammunition,
-                    range=weapon.range
-                )
-                db.add(db_weapon)
+    async def create_template_from_plugin(self, db: Session, plugin_type: str) -> ShipTemplate:
+        # Создать шаблон корабля из плагина
+        self.logger.info("creating_ship_template_from_plugin", plugin_type=plugin_type)
+        plugin = self.plugin_manager.get_plugin(plugin_type)
+        if not plugin:
+            self.logger.error("plugin_not_found", plugin_type=plugin_type)
+            raise ValueError(f"Плагин {plugin_type} не найден")
+        
+        template_data = plugin.get_template_data()
+        template = await self.create_template(db, template_data)
+        
+        # Отправляем событие создания корабля
+        await self.event_bus.publish(
+            "ship_created",
+            {
+                "ship_id": template.id,
+                "template_id": template.id,
+                "type": template.type,
+                "name": template.name,
+                "created_at": template.created_at.isoformat(),
+                "parameters": template_data.dict()
+            }
+        )
+        
+        return template
 
-            db.commit()
-            db.refresh(db_template)
-            return db_template
-
-        except IntegrityError:
-            db.rollback()
-            raise HTTPException(status_code=400, detail="Шаблон с таким ID или именем уже существует")
-
-    @staticmethod
-    def update_template(db: Session, template_id: str, template: ShipTemplateUpdate) -> Optional[ShipTemplate]:
-        """Обновить существующий шаблон корабля"""
-        db_template = ShipService.get_template(db, template_id)
+    async def update_template(
+        self, db: Session, template_id: str, template: ShipTemplateUpdate
+    ) -> Optional[ShipTemplate]:
+        # Обновить существующий шаблон корабля
+        self.logger.info("updating_ship_template", template_id=template_id, template_data=template.dict())
+        db_template = self.get_template(db, template_id)
         if not db_template:
+            self.logger.warning("template_not_found", template_id=template_id)
             return None
+        
+        for key, value in template.dict(exclude_unset=True).items():
+            setattr(db_template, key, value)
+        
+        db.commit()
+        db.refresh(db_template)
+        
+        # Отправляем событие обновления шаблона
+        await self.event_bus.publish(
+            "template_updated",
+            {
+                "template_id": db_template.id,
+                "name": db_template.name,
+                "type": db_template.type,
+                "updated_at": datetime.utcnow().isoformat()
+            }
+        )
+        
+        return db_template
 
-        if db_template.is_default:
-            raise HTTPException(status_code=400, detail="Нельзя изменять предустановленные шаблоны")
-
-        try:
-            # Обновляем основные характеристики
-            if template.name is not None:
-                db_template.name = template.name
-            if template.description is not None:
-                db_template.description = template.description
-            if template.characteristics is not None:
-                db_template.max_speed = template.characteristics.max_speed
-                db_template.acceleration = template.characteristics.acceleration
-                db_template.rotation_speed = template.characteristics.rotation_speed
-                db_template.fuel_capacity = template.characteristics.fuel_capacity
-                db_template.fuel_consumption = template.characteristics.fuel_consumption
-                db_template.hull_strength = template.characteristics.hull_strength
-                db_template.shield_strength = template.characteristics.shield_strength
-            if template.size is not None:
-                db_template.length = template.size[0]
-                db_template.width = template.size[1]
-
-            # Обновляем оружие
-            if template.weapons is not None:
-                # Удаляем старое оружие
-                db.query(ShipWeapon).filter(ShipWeapon.ship_template_id == template_id).delete()
-                
-                # Добавляем новое оружие
-                for weapon in template.weapons:
-                    db_weapon = ShipWeapon(
-                        ship_template=db_template,
-                        type=weapon.type,
-                        damage=weapon.damage,
-                        cooldown=weapon.cooldown,
-                        ammunition=weapon.ammunition,
-                        range=weapon.range
-                    )
-                    db.add(db_weapon)
-
-            db.commit()
-            db.refresh(db_template)
-            return db_template
-
-        except IntegrityError:
-            db.rollback()
-            raise HTTPException(status_code=400, detail="Шаблон с таким именем уже существует")
-
-    @staticmethod
-    def delete_template(db: Session, template_id: str) -> bool:
-        """Удалить шаблон корабля"""
-        db_template = ShipService.get_template(db, template_id)
+    async def delete_template(self, db: Session, template_id: str) -> bool:
+        # Удалить шаблон корабля
+        self.logger.info("deleting_ship_template", template_id=template_id)
+        db_template = self.get_template(db, template_id)
         if not db_template:
+            self.logger.warning("template_not_found", template_id=template_id)
             return False
-
-        if db_template.is_default:
-            raise HTTPException(status_code=400, detail="Нельзя удалять предустановленные шаблоны")
-
-        if db_template.in_use:
-            raise HTTPException(status_code=400, detail="Нельзя удалить шаблон, который используется")
-
+        
         db.delete(db_template)
         db.commit()
-        return True 
+        
+        # Отправляем событие удаления шаблона
+        await self.event_bus.publish(
+            "template_deleted",
+            {
+                "template_id": template_id,
+                "deleted_at": datetime.utcnow().isoformat()
+            }
+        )
+        
+        return True
+
+    def get_available_plugin_types(self) -> List[str]:
+        # Получить список доступных типов плагинов
+        self.logger.info("getting_available_plugin_types")
+        return self.plugin_manager.get_available_ship_types() 

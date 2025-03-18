@@ -9,7 +9,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from common.database import Base, engine
 
 def init_database():
-    """Инициализирует базу данных"""
+    # Инициализирует базу данных
     # Создаем все таблицы
     Base.metadata.create_all(bind=engine)
     
@@ -18,13 +18,11 @@ def init_database():
     if migrations_dir.exists():
         # Создаем таблицу для отслеживания миграций, если её нет
         with engine.connect() as conn:
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS migrations (
+            conn.execute(text(# CREATE TABLE IF NOT EXISTS migrations (
                     id SERIAL PRIMARY KEY,
                     version VARCHAR(255) NOT NULL UNIQUE,
                     applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                )
-            """))
+                )))
             conn.commit()
         
         # Применяем все SQL-миграции в порядке версий

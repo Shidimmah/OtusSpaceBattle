@@ -37,5 +37,5 @@ app.include_router(analytics_router)
 
 @app.get("/health")
 async def health_check():
-    """Эндпоинт для проверки здоровья сервиса"""
+    # Эндпоинт для проверки здоровья сервиса
     return {"status": "healthy"} 

@@ -10,13 +10,13 @@ from ..auth import get_current_admin_user
 router = APIRouter(prefix="/ships", tags=["ships"])
 
 class WeaponType(str, Enum):
-    """Типы оружия"""
+    # Типы оружия
     TORPEDO = "torpedo"  # Торпеды
     LASER = "laser"     # Лазерное оружие
     MISSILE = "missile" # Ракеты
 
 class WeaponCharacteristics(BaseModel):
-    """Характеристики оружия"""
+    # Характеристики оружия
     type: WeaponType
     damage: float = Field(..., gt=0)
     cooldown: float = Field(..., gt=0)
@@ -24,7 +24,7 @@ class WeaponCharacteristics(BaseModel):
     range: float = Field(..., gt=0)
 
 class ShipCharacteristics(BaseModel):
-    """Характеристики корабля"""
+    # Характеристики корабля
     max_speed: float = Field(..., gt=0)
     acceleration: float = Field(..., gt=0)
     rotation_speed: float = Field(..., gt=0)
@@ -34,7 +34,7 @@ class ShipCharacteristics(BaseModel):
     shield_strength: float = Field(..., gt=0)
 
 class ShipTemplate(BaseModel):
-    """Шаблон корабля"""
+    # Шаблон корабля
     id: Optional[str] = None
     name: str
     description: str
@@ -45,13 +45,13 @@ class ShipTemplate(BaseModel):
     in_use: bool = False
 
 async def get_resource_service():
-    """Получить URL сервиса управления ресурсами"""
+    # Получить URL сервиса управления ресурсами
     settings = get_settings()
     return settings.resource_management_url
 
 @router.get("/templates", response_model=List[ShipTemplate])
 async def get_ship_templates():
-    """Получить список всех доступных шаблонов кораблей"""
+    # Получить список всех доступных шаблонов кораблей
     resource_url = await get_resource_service()
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{resource_url}/ships/templates")
@@ -61,7 +61,7 @@ async def get_ship_templates():
 
 @router.get("/templates/{template_id}", response_model=ShipTemplate)
 async def get_ship_template(template_id: str):
-    """Получить шаблон корабля по ID"""
+    # Получить шаблон корабля по ID
     resource_url = await get_resource_service()
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{resource_url}/ships/templates/{template_id}")
@@ -71,7 +71,7 @@ async def get_ship_template(template_id: str):
 
 @router.post("/templates", response_model=ShipTemplate)
 async def create_ship_template(template: ShipTemplate, admin: dict = Depends(get_current_admin_user)):
-    """Создать новый шаблон корабля (только для администраторов)"""
+    # Создать новый шаблон корабля (только для администраторов)
     resource_url = await get_resource_service()
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -89,7 +89,7 @@ async def update_ship_template(
     template: ShipTemplate,
     admin: dict = Depends(get_current_admin_user)
 ):
-    """Обновить существующий шаблон корабля (только для администраторов)"""
+    # Обновить существующий шаблон корабля (только для администраторов)
     resource_url = await get_resource_service()
     async with httpx.AsyncClient() as client:
         response = await client.put(
@@ -103,7 +103,7 @@ async def update_ship_template(
 
 @router.delete("/templates/{template_id}")
 async def delete_ship_template(template_id: str, admin: dict = Depends(get_current_admin_user)):
-    """Удалить шаблон корабля (только для администраторов)"""
+    # Удалить шаблон корабля (только для администраторов)
     resource_url = await get_resource_service()
     async with httpx.AsyncClient() as client:
         response = await client.delete(

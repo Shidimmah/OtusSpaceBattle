@@ -26,7 +26,7 @@ ANALYTICS_URL = os.getenv("ANALYTICS_URL", "http://analytics:8000")
 
 @app.api_route("/ships/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_ships(request: Request, path: str):
-    """Проксирование запросов к сервису управления ресурсами"""
+    # Проксирование запросов к сервису управления ресурсами
     client = httpx.AsyncClient()
     url = f"{RESOURCE_MANAGEMENT_URL}/ships/{path}"
     
@@ -50,7 +50,7 @@ async def proxy_ships(request: Request, path: str):
 
 @app.api_route("/battles/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_battles(request: Request, path: str):
-    """Проксирование запросов к сервису боевой механики"""
+    # Проксирование запросов к сервису боевой механики
     client = httpx.AsyncClient()
     url = f"{BATTLE_MECHANICS_URL}/battles/{path}"
     
@@ -71,7 +71,7 @@ async def proxy_battles(request: Request, path: str):
 
 @app.api_route("/ranking/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_ranking(request: Request, path: str):
-    """Проксирование запросов к сервису рейтинга"""
+    # Проксирование запросов к сервису рейтинга
     client = httpx.AsyncClient()
     url = f"{RANKING_URL}/ranking/{path}"
     
@@ -92,7 +92,7 @@ async def proxy_ranking(request: Request, path: str):
 
 @app.api_route("/analytics/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_analytics(request: Request, path: str):
-    """Проксирование запросов к сервису аналитики"""
+    # Проксирование запросов к сервису аналитики
     client = httpx.AsyncClient()
     url = f"{ANALYTICS_URL}/analytics/{path}"
     

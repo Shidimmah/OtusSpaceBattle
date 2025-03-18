@@ -21,11 +21,31 @@ services:
       - BATTLE_MECHANICS_URL=http://battle_mechanics:8000
       - RANKING_URL=http://ranking:8000
       - ANALYTICS_URL=http://analytics:8000
+      - AUTH_SERVICE_URL=http://auth_service:8000
     depends_on:
       - resource_management
       - battle_mechanics
       - ranking
       - analytics
+      - auth_service
+    networks:
+      - app_network
+
+  auth_service:
+    build:
+      context: ./otus_space_battle/services/auth_service
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=space_battle
+      - JWT_SECRET=your-secret-key-here
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+    depends_on:
+      - db
     networks:
       - app_network
 
@@ -39,8 +59,10 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_DB=space_battle
+      - AUTH_SERVICE_URL=http://auth_service:8000
     depends_on:
       - db
+      - auth_service
     networks:
       - app_network
 
@@ -50,8 +72,10 @@ services:
       dockerfile: Dockerfile
     environment:
       - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
+      - AUTH_SERVICE_URL=http://auth_service:8000
     depends_on:
       - resource_management
+      - auth_service
     networks:
       - app_network
 
@@ -65,8 +89,10 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_DB=space_battle
+      - AUTH_SERVICE_URL=http://auth_service:8000
     depends_on:
       - db
+      - auth_service
     networks:
       - app_network
 
@@ -76,8 +102,65 @@ services:
       dockerfile: Dockerfile
     environment:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - AUTH_SERVICE_URL=http://auth_service:8000
     depends_on:
       - elasticsearch
+      - auth_service
+    networks:
+      - app_network
+
+  game_session:
+    build:
+      context: ./otus_space_battle/services/game_session_service
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=space_battle
+      - AUTH_SERVICE_URL=http://auth_service:8000
+    depends_on:
+      - db
+      - auth_service
+    networks:
+      - app_network
+
+  matchmaking:
+    build:
+      context: ./otus_space_battle/services/matchmaking_service
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=space_battle
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - GAME_SESSION_URL=http://game_session:8000
+    depends_on:
+      - db
+      - auth_service
+      - game_session
+    networks:
+      - app_network
+
+  fleet_management:
+    build:
+      context: ./otus_space_battle/services/fleet_management_service
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=space_battle
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
+    depends_on:
+      - db
+      - auth_service
+      - resource_management
     networks:
       - app_network
 

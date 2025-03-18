@@ -11,6 +11,7 @@ import uvicorn
 
 from common.models import User
 from common.utils.database import get_session
+from ..config import settings
 
 app = FastAPI(title="Auth Service")
 
@@ -146,6 +147,10 @@ async def get_current_user(
 @app.get("/users/me", response_model=UserResponse)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001) 

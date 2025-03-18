@@ -3,12 +3,12 @@ from typing import List, Optional, Tuple
 from pydantic import BaseModel, Field
 
 class Vector2D(BaseModel):
-    """Двумерный вектор для позиции и скорости"""
+    # Двумерный вектор для позиции и скорости
     x: float
     y: float
 
 class WeaponState(BaseModel):
-    """Состояние оружия"""
+    # Состояние оружия
     type: str
     damage: float
     cooldown: float
@@ -17,7 +17,7 @@ class WeaponState(BaseModel):
     last_shot: float = 0.0  # Время последнего выстрела
 
 class ShipState(BaseModel):
-    """Состояние корабля в игре"""
+    # Состояние корабля в игре
     id: str
     template_id: str
     player_id: str
@@ -32,11 +32,11 @@ class ShipState(BaseModel):
     is_destroyed: bool = False
 
 class MoveCommand(BaseModel):
-    """Команда на движение корабля"""
+    # Команда на движение корабля
     thrust: float = Field(ge=-1.0, le=1.0, description="Тяга двигателя от -1 до 1")
     rotation: float = Field(ge=-1.0, le=1.0, description="Поворот от -1 до 1")
 
 class FireCommand(BaseModel):
-    """Команда на выстрел"""
+    # Команда на выстрел
     weapon_index: int = Field(ge=0, description="Индекс оружия в массиве weapons")
     target: Vector2D = Field(description="Координаты цели") 

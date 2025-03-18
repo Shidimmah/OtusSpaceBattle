@@ -8,7 +8,7 @@ from ..config import get_settings
 router = APIRouter()
 
 def get_ship_service():
-    """Получить сервис для работы с кораблями"""
+    # Получить сервис для работы с кораблями
     settings = get_settings()
     return ShipService(settings.resource_management_url)
 
@@ -19,7 +19,7 @@ async def create_ship(
     position: Vector2D,
     service: ShipService = Depends(get_ship_service)
 ):
-    """Создать корабль в игре"""
+    # Создать корабль в игре
     try:
         return await service.create_ship(template_id, player_id, position)
     except ValueError as e:
@@ -27,7 +27,7 @@ async def create_ship(
 
 @router.get("/{ship_id}", response_model=ShipState)
 def get_ship_state(ship_id: str, service: ShipService = Depends(get_ship_service)):
-    """Получить состояние корабля"""
+    # Получить состояние корабля
     ship = service.get_ship(ship_id)
     if not ship:
         raise HTTPException(status_code=404, detail="Корабль не найден")
@@ -39,7 +39,7 @@ def move_ship(
     command: MoveCommand,
     service: ShipService = Depends(get_ship_service)
 ):
-    """Управление движением корабля"""
+    # Управление движением корабля
     ship = service.update_ship(ship_id, command)
     if not ship:
         raise HTTPException(status_code=404, detail="Корабль не найден")
@@ -51,7 +51,7 @@ def fire_weapon(
     command: FireCommand,
     service: ShipService = Depends(get_ship_service)
 ):
-    """Выстрел из оружия корабля"""
+    # Выстрел из оружия корабля
     result = service.fire_weapon(ship_id, command)
     if not result:
         raise HTTPException(status_code=404, detail="Корабль не найден")

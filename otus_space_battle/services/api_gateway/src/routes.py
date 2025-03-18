@@ -13,7 +13,7 @@ analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
 # Игровые эндпоинты
 @game_router.post("/create")
 async def create_game(players: List[str], api_key: str = Depends(verify_api_key)) -> GameState:
-    """Создание новой игры"""
+    # Создание новой игры
     async with httpx.AsyncClient() as client:
         # Инициализация кораблей через battle_mechanics
         ships_response = await client.post(
@@ -38,7 +38,7 @@ async def execute_command(
     game: dict = Depends(get_current_game),
     api_key: str = Depends(verify_api_key)
 ) -> GameState:
-    """Выполнение игровой команды"""
+    # Выполнение игровой команды
     async with httpx.AsyncClient() as client:
         if command.command_type == "move":
             response = await client.post(
@@ -67,7 +67,7 @@ async def get_game_state(
     game: dict = Depends(get_current_game),
     api_key: str = Depends(verify_api_key)
 ) -> GameState:
-    """Получение текущего состояния игры"""
+    # Получение текущего состояния игры
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.BATTLE_MECHANICS_URL}/game/{game_id}/state")
         response.raise_for_status()
@@ -80,7 +80,7 @@ async def get_player_stats(
     player: dict = Depends(get_current_player),
     api_key: str = Depends(verify_api_key)
 ) -> PlayerStats:
-    """Получение статистики игрока"""
+    # Получение статистики игрока
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.RANKING_URL}/player/{player_id}")
         response.raise_for_status()
@@ -91,7 +91,7 @@ async def get_leaderboard(
     limit: int = 10,
     api_key: str = Depends(verify_api_key)
 ) -> List[PlayerStats]:
-    """Получение таблицы лидеров"""
+    # Получение таблицы лидеров
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.RANKING_URL}/ranking/leaderboard?limit={limit}")
         response.raise_for_status()
@@ -104,7 +104,7 @@ async def get_game_events(
     game: dict = Depends(get_current_game),
     api_key: str = Depends(verify_api_key)
 ) -> List[GameEvent]:
-    """Получение событий игры"""
+    # Получение событий игры
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.ANALYTICS_URL}/analytics/events/{game_id}")
         response.raise_for_status()
@@ -116,7 +116,7 @@ async def get_game_stats(
     game: dict = Depends(get_current_game),
     api_key: str = Depends(verify_api_key)
 ):
-    """Получение статистики игры"""
+    # Получение статистики игры
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.ANALYTICS_URL}/analytics/game/{game_id}")
         response.raise_for_status()

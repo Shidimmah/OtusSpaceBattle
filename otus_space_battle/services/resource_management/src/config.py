@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    """Настройки приложения"""
+    # Настройки приложения
     # Настройки PostgreSQL
     postgres_user: str = "postgres"
     postgres_password: str = "postgres"

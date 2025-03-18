@@ -17,7 +17,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
-    """Функция-генератор для получения сессии базы данных"""
+    # Функция-генератор для получения сессии базы данных
     db = SessionLocal()
     try:
         yield db

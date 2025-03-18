@@ -152,5 +152,9 @@ async def get_active_match(player_id: int, session: AsyncSession = Depends(get_s
         return None
     return match
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8002) 

@@ -6,13 +6,13 @@ from sqlalchemy.orm import relationship
 from ..database import Base
 
 class WeaponType(str, Enum):
-    """Типы оружия"""
+    # Типы оружия
     TORPEDO = "torpedo"
     LASER = "laser"
     MISSILE = "missile"
 
 class ShipTemplate(Base):
-    """Модель шаблона корабля"""
+    # Модель шаблона корабля
     __tablename__ = "ship_templates"
 
     id = Column(String, primary_key=True)
@@ -38,7 +38,7 @@ class ShipTemplate(Base):
     weapons = relationship("ShipWeapon", back_populates="ship_template", cascade="all, delete-orphan")
 
 class ShipWeapon(Base):
-    """Модель оружия корабля"""
+    # Модель оружия корабля
     __tablename__ = "ship_weapons"
 
     id = Column(Integer, primary_key=True)
