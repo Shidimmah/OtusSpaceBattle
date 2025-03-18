@@ -14,8 +14,8 @@ services:
 
   api_gateway:
     build:
-      context: ./otus_space_battle/services/api_gateway
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: api_gateway/Dockerfile
     environment:
       - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
       - BATTLE_MECHANICS_URL=http://battle_mechanics:8000
@@ -33,8 +33,8 @@ services:
 
   auth_service:
     build:
-      context: ./otus_space_battle/services/auth_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: auth_service/Dockerfile
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -51,8 +51,8 @@ services:
 
   resource_management:
     build:
-      context: ./otus_space_battle/services/resource_management
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: resource_management/Dockerfile
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -68,8 +68,8 @@ services:
 
   battle_mechanics:
     build:
-      context: ./otus_space_battle/services/battle_mechanics
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: battle_mechanics/Dockerfile
     environment:
       - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
       - AUTH_SERVICE_URL=http://auth_service:8000
@@ -81,8 +81,8 @@ services:
 
   ranking:
     build:
-      context: ./otus_space_battle/services/ranking
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: ranking/Dockerfile
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -98,8 +98,8 @@ services:
 
   analytics:
     build:
-      context: ./otus_space_battle/services/analytics
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: analytics/Dockerfile
     environment:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - AUTH_SERVICE_URL=http://auth_service:8000
@@ -111,8 +111,8 @@ services:
 
   game_session:
     build:
-      context: ./otus_space_battle/services/game_session_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: game_session_service/Dockerfile
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -128,8 +128,8 @@ services:
 
   matchmaking:
     build:
-      context: ./otus_space_battle/services/matchmaking_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: matchmaking_service/Dockerfile
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -147,8 +147,8 @@ services:
 
   fleet_management:
     build:
-      context: ./otus_space_battle/services/fleet_management_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: fleet_management_service/Dockerfile
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
