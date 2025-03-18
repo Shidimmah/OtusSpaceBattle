@@ -7,7 +7,7 @@ COPY ranking/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем код сервиса и общие модули
-COPY ranking/src/ .
+COPY ranking/main.py .
 COPY common /app/common
 
 # Открываем порт
