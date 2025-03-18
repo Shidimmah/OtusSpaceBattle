@@ -16,6 +16,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: api_gateway/Dockerfile
+    ports:
+      - "8000:8000"
     environment:
       - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
       - BATTLE_MECHANICS_URL=http://battle_mechanics:8000
@@ -35,6 +37,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: auth_service/Dockerfile
+    ports:
+      - "8001:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -53,6 +57,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: resource_management/Dockerfile
+    ports:
+      - "8002:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -70,6 +76,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: battle_mechanics/Dockerfile
+    ports:
+      - "8003:8000"
     environment:
       - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
       - AUTH_SERVICE_URL=http://auth_service:8000
@@ -100,6 +108,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: analytics/Dockerfile
+    ports:
+      - "8004:8000"
     environment:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - AUTH_SERVICE_URL=http://auth_service:8000
@@ -113,6 +123,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: game_session_service/Dockerfile
+    ports:
+      - "8005:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -130,6 +142,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: matchmaking_service/Dockerfile
+    ports:
+      - "8006:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -149,6 +163,8 @@ services:
     build:
       context: ./otus_space_battle/services
       dockerfile: fleet_management_service/Dockerfile
+    ports:
+      - "8007:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

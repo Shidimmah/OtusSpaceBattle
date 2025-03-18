@@ -34,7 +34,10 @@ jobs:
     
     - name: Start services
       run: |
+        docker-compose build --progress=plain
         docker-compose up -d
+        docker-compose ps
+        docker-compose logs
         # Ждем, пока все сервисы станут доступны
         chmod +x ./scripts/wait_for_services.sh
         ./scripts/wait_for_services.sh

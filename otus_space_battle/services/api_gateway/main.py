@@ -11,7 +11,7 @@ app = FastAPI()
 AUTH_SERVICE_URL = "http://auth_service:8000"
 MATCHMAKING_SERVICE_URL = "http://matchmaking:8000"
 
-SECRET_KEY = "your_secret_key"  # ❗ Должен совпадать с ключом из `auth_service`
+SECRET_KEY = "your_secret_key"  
 
 class UserLogin(BaseModel):
     username: str
