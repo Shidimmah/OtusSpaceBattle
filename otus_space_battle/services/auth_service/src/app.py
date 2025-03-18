@@ -11,7 +11,6 @@ import uvicorn
 
 from common.models.user import User
 from common.utils.database import get_session
-from ..config import settings
 
 app = FastAPI(title="Auth Service")
 
