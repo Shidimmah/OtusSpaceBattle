@@ -1,17 +1,19 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Копируем зависимости
-COPY auth_service/requirements.txt .
+# Копируем файлы зависимостей и устанавливаем их
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код сервиса и общие модули
-COPY auth_service/src/ .
-COPY common /app/common
+# Копируем код сервиса
+COPY src/ .
+
+# Копируем общие модули
+COPY ../../common /app/common
 
 # Открываем порт
 EXPOSE 8000
 
-# Запускаем FastAPI с Uvicorn
+# Запускаем приложение
 CMD ["python", "app.py"]
