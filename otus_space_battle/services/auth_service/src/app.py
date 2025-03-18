@@ -11,14 +11,13 @@ import uvicorn
 
 from common.models.user import User
 from common.utils.database import get_session
-from ..config.settings import settings
 
 app = FastAPI(title="Auth Service")
 
 # Настройки JWT
-SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = settings.ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+SECRET_KEY = "your_secret_key"  # В продакшене использовать безопасный ключ
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Настройка хеширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
