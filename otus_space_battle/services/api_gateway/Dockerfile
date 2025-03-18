@@ -11,11 +11,11 @@ COPY api_gateway/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем код сервиса
-COPY api_gateway/src/ .
+COPY api_gateway/main.py .
 COPY common /app/common
 
 # Открываем порт
 EXPOSE 8000
 
 # Запускаем FastAPI с Uvicorn
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]
