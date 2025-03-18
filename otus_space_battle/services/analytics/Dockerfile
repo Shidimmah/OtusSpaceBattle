@@ -6,6 +6,7 @@ COPY analytics/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY analytics/src/ .
+COPY analytics/main.py .
 COPY common /app/common
 
-CMD ["python", "app.py"] 
+CMD ["python", "main.py"] 

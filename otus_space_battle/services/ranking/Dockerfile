@@ -5,7 +5,7 @@ WORKDIR /app
 COPY ranking/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ranking/src/ .
+COPY ranking/main.py .
 COPY common /app/common
 
-CMD ["python", "app.py"] 
+CMD ["python", "main.py"] 
