@@ -7,7 +7,11 @@ from sqlalchemy import select, and_
 import json
 import uvicorn
 
-from common.models import Match, User, Fleet, Ship, GameEvent
+from common.models.match import Match
+from common.models.user import User
+from common.models.fleet import Fleet
+from common.models.ship import Ship
+from common.models.game_event import GameEvent
 from common.utils.database import get_session
 
 app = FastAPI(title="Game Session Service")

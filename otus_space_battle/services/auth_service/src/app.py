@@ -8,8 +8,9 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uvicorn
+import bcrypt
 
-from common.models import User
+from common.models.user import User
 from common.utils.database import get_session
 from ..config import settings
 

@@ -4,8 +4,9 @@ from typing import List, Optional
 import uvicorn
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from database import get_session
-from models import Fleet, Ship, ShipType
+from common.utils.database import get_session
+from common.models.fleet import Fleet
+from common.models.ship import Ship, ShipType
 
 app = FastAPI(title="Fleet Management Service")
 

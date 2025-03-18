@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 import uvicorn
 
-from common.models import Match, User, Fleet
+from common.models.match import Match
+from common.models.user import User
+from common.models.fleet import Fleet
 from common.utils.database import get_session
 
 app = FastAPI(title="Matchmaking Service")

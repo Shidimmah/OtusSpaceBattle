@@ -221,6 +221,8 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.50.1
+    ports:
+      - "9090:9090"
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus

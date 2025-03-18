@@ -5,13 +5,13 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Копируем зависимости
-COPY api_gateway/requirements.txt .
+COPY requirements.txt .
 
 # Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем код сервиса
-COPY api_gateway/main.py .
+COPY main.py .
 COPY common /app/common
 
 # Открываем порт
