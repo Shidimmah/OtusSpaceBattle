@@ -2,9 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY battle_mechanics/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY battle_mechanics/src/ .
+COPY common /app/common
 
-CMD ["python", "otus_space_battle/services/battle_mechanics/main.py"] 
+CMD ["python", "app.py"] 

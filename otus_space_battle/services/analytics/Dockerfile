@@ -2,9 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY analytics/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY analytics/src/ .
+COPY common /app/common
 
-CMD ["python", "otus_space_battle/services/analytics/main.py"] 
+CMD ["python", "app.py"] 
