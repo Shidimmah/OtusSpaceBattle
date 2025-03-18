@@ -11,15 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.8'
     
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v3
       
     - name: Install Docker Compose
       run: |
@@ -36,14 +36,15 @@ jobs:
       run: |
         docker-compose up -d
         # Ждем, пока все сервисы станут доступны
+        chmod +x ./scripts/wait_for_services.sh
         ./scripts/wait_for_services.sh
     
     - name: Run tests
       run: |
-        pytest --cov=src --cov-report=term-missing
+        pytest --cov=src --cov-report=term-missing --cov-report=xml
     
     - name: Upload coverage report
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
@@ -54,7 +55,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Deploy to production
       env:
@@ -62,16 +63,9 @@ jobs:
         SERVER_HOST: ${{ secrets.SERVER_HOST }}
         SERVER_USER: ${{ secrets.SERVER_USER }}
       run: |
-        # Устанавливаем SSH ключ
         mkdir -p ~/.ssh
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
-        
-        # Добавляем сервер в known_hosts
         ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
-        
-        # Копируем файлы на сервер
         scp -i ~/.ssh/deploy_key -r ./* $SERVER_USER@$SERVER_HOST:/home/$SERVER_USER/space-battle/
-        
-        # Запускаем скрипт деплоя
-        ssh -i ~/.ssh/deploy_key $SERVER_USER@$SERVER_HOST 'cd /home/$SERVER_USER/space-battle && ./deploy.sh' 
+        ssh -i ~/.ssh/deploy_key $SERVER_USER@$SERVER_HOST "cd /home/$SERVER_USER/space-battle && ./deploy.sh" 
