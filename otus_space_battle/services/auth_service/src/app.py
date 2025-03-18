@@ -16,7 +16,7 @@ from ..config import settings
 app = FastAPI(title="Auth Service")
 
 # Настройки JWT
-SECRET_KEY = "your_secret_key"  # В продакшене использовать безопасный ключ
+SECRET_KEY = "your_secret_key"  
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
