@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -9,8 +9,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем файлы тестов и конфигурации
-COPY . .
 COPY common /app/common
+COPY otus_space_battle /app/otus_space_battle
+COPY tests /app/tests
+COPY entrypoint.sh /app/entrypoint.sh
 
 # Делаем entrypoint.sh исполняемым
 RUN chmod +x entrypoint.sh
