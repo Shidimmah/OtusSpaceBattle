@@ -28,4 +28,16 @@ def get_db():
 
 async def init_models():
     """Инициализирует модели базы данных"""
+    Base.metadata.create_all(bind=engine)
+
+def get_engine():
+    """Возвращает экземпляр движка базы данных"""
+    return engine
+
+def get_session():
+    """Возвращает новую сессию базы данных"""
+    return SessionLocal()
+
+def init_db():
+    """Инициализирует базу данных, создавая все таблицы"""
     Base.metadata.create_all(bind=engine) 

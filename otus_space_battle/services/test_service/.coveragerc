@@ -1,8 +1,9 @@
 [run]
-source = .
+source = common, services
 omit =
     # Исключаем сами тесты из покрытия
     */tests/*
+    /app/tests/*
     # Исключаем файлы миграций
     */migrations/*
     # Исключаем настройки
