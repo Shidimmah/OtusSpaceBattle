@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем файлы тестов и конфигурации
 COPY . .
+COPY common /app/common
 
 # Делаем entrypoint.sh исполняемым
 RUN chmod +x entrypoint.sh

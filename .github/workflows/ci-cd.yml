@@ -2,19 +2,19 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v2
     
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v2
       with:
         python-version: '3.8'
     
@@ -47,26 +47,30 @@ jobs:
     
     - name: Run tests
       run: |
-        # Диагностика
-        pwd
-        ls -la
-        ls -la common/
+        # Запускаем тесты через Docker
+        docker-compose up --exit-code-from test_service --abort-on-container-exit test_service
         
-        # Копируем common для тестов более детально
-        mkdir -p common/models common/utils
-        cp -r otus_space_battle/common/models/* common/models/
-        cp -r otus_space_battle/common/utils/* common/utils/
-        
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
-        # Запускаем основные тесты и тесты из сервисов
-        pytest tests/ otus_space_battle/services/*/tests/ --cov=otus_space_battle --cov=common --cov=otus_space_battle/services --cov-report=term-missing --cov-report=xml
+        # Проверяем результаты тестов
+        if [ -f reports/coverage_summary.txt ]; then
+          cat reports/coverage_summary.txt
+          COVERAGE=$(grep -oP 'Total coverage: \K\d+\.\d+' reports/coverage_summary.txt)
+          if (( $(echo "$COVERAGE < 95" | bc -l) )); then
+            echo "Coverage is below 95%"
+            exit 1
+          fi
+        else
+          echo "Coverage report not found"
+          exit 1
+        fi
     
-    - name: Upload coverage report
-      uses: codecov/codecov-action@v4
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v2
       with:
-        file: ./coverage.xml
-        fail_ci_if_error: true
-        coverage: '/TOTAL.+\s+([0-9]{1,3}%)/'
+        name: coverage-reports
+        path: |
+          reports/coverage.xml
+          reports/html_coverage/
+          reports/coverage_summary.txt
 
   deploy:
     needs: test
