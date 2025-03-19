@@ -18,13 +18,6 @@ def api_client():
         yield client
 
 @pytest.fixture
-async def async_api_client():
-    """Асинхронный HTTP клиент для тестирования API"""
-    client = httpx.AsyncClient(timeout=15.0)
-    yield client
-    await client.aclose()
-
-@pytest.fixture
 def api_gateway_url():
     """URL API Gateway"""
     return API_GATEWAY_URL

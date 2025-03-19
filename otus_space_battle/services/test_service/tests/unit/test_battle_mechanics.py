@@ -1,124 +1,118 @@
 import pytest
 import httpx
-import uuid
 
 @pytest.mark.unit
 class TestBattleMechanics:
     
     @pytest.mark.asyncio
-    async def test_create_game(self, async_api_client, battle_mechanics_url):
+    async def test_create_game(self, battle_mechanics_url):
         """Тест создания игры"""
         # Подготовка тестовых данных
         game_data = {
-            "players": ["player1", "player2"],
-            "map_size": {"width": 1000, "height": 1000}
+            "player1_id": "player1",
+            "player2_id": "player2",
+            "map_size": {"width": 100, "height": 100}
         }
         
-        # Отправка запроса на создание игры
-        response = await async_api_client.post(
-            f"{battle_mechanics_url}/games/",
-            json=game_data
-        )
-        
-        # Проверка результата
-        assert response.status_code == 200
-        data = response.json()
-        assert "id" in data
-        assert len(data["players"]) == 2
-        assert data["status"] == "waiting"
-        assert data["turn"] == 0
+        # Создаем клиент для теста
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Отправка запроса на создание игры
+            response = await client.post(
+                f"{battle_mechanics_url}/game/create",
+                json=game_data
+            )
+            
+            # Проверка результата
+            assert response.status_code == 200
+            data = response.json()
+            assert "game_id" in data
+            assert data["status"] == "created"
     
     @pytest.mark.asyncio
-    async def test_add_ship(self, async_api_client, battle_mechanics_url):
-        """Тест добавления корабля в игру"""
+    async def test_add_ship(self, battle_mechanics_url):
+        """Тест добавления корабля"""
         # Создаем игру
         game_data = {
-            "players": ["player1", "player2"],
-            "map_size": {"width": 1000, "height": 1000}
-        }
-        game_response = await async_api_client.post(
-            f"{battle_mechanics_url}/games/",
-            json=game_data
-        )
-        game_id = game_response.json()["id"]
-        
-        # Подготовка данных корабля
-        ship_data = {
-            "player_id": "player1",
-            "position": {"x": 100, "y": 100},
-            "rotation": 0,
-            "health": 100,
-            "fuel": 100,
-            "torpedoes": 10
+            "player1_id": "player1",
+            "player2_id": "player2",
+            "map_size": {"width": 100, "height": 100}
         }
         
-        # Отправка запроса на добавление корабля
-        response = await async_api_client.post(
-            f"{battle_mechanics_url}/games/{game_id}/ships",
-            json=ship_data
-        )
-        
-        # Проверка результата
-        assert response.status_code == 200
-        data = response.json()
-        assert "id" in data
-        assert data["player_id"] == ship_data["player_id"]
-        assert data["position"] == ship_data["position"]
-    
-    @pytest.mark.asyncio
-    async def test_make_move(self, async_api_client, battle_mechanics_url):
-        """Тест выполнения хода в игре"""
-        # Создаем игру
-        game_data = {
-            "players": ["player1", "player2"],
-            "map_size": {"width": 1000, "height": 1000}
-        }
-        game_response = await async_api_client.post(
-            f"{battle_mechanics_url}/games/",
-            json=game_data
-        )
-        game_id = game_response.json()["id"]
-        
-        # Добавляем корабли для обоих игроков
-        for player_id in ["player1", "player2"]:
+        # Создаем клиент для теста
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Создаем игру
+            game_response = await client.post(
+                f"{battle_mechanics_url}/game/create",
+                json=game_data
+            )
+            game_id = game_response.json()["game_id"]
+            
+            # Добавляем корабль
             ship_data = {
-                "player_id": player_id,
-                "position": {"x": 100 if player_id == "player1" else 900, "y": 100},
-                "rotation": 0,
-                "health": 100,
-                "fuel": 100,
-                "torpedoes": 10
+                "game_id": game_id,
+                "player_id": "player1",
+                "ship_type": "battleship",
+                "position": {"x": 10, "y": 10},
+                "direction": "horizontal"
             }
-            await async_api_client.post(
-                f"{battle_mechanics_url}/games/{game_id}/ships",
+            
+            response = await client.post(
+                f"{battle_mechanics_url}/game/{game_id}/ships",
                 json=ship_data
             )
-        
-        # Подготовка данных хода
-        move_data = {
-            "player_id": "player1",
-            "actions": [
-                {"type": "move", "direction": {"x": 10, "y": 0}},
-                {"type": "rotate", "angle": 45}
-            ]
+            
+            # Проверка результата
+            assert response.status_code == 200
+            data = response.json()
+            assert "ship_id" in data
+            assert data["position"] == ship_data["position"]
+    
+    @pytest.mark.asyncio
+    async def test_make_move(self, battle_mechanics_url):
+        """Тест выполнения хода"""
+        # Создаем игру
+        game_data = {
+            "player1_id": "player1",
+            "player2_id": "player2",
+            "map_size": {"width": 100, "height": 100}
         }
         
-        # Отправка запроса на выполнение хода
-        response = await async_api_client.post(
-            f"{battle_mechanics_url}/games/{game_id}/moves",
-            json=move_data
-        )
-        
-        # Проверка результата
-        assert response.status_code == 200
-        data = response.json()
-        assert data["turn"] == 1
-        
-        # Находим корабль игрока и проверяем его новую позицию
-        player1_ship = next(
-            (ship for ship in data["ships"] if ship["player_id"] == "player1"),
-            None
-        )
-        assert player1_ship is not None
-        assert player1_ship["position"]["x"] > 100  # корабль должен был сдвинуться вправо
-        assert abs(player1_ship["rotation"] - 45) < 0.01  # корабль должен был повернуться 
+        # Создаем клиент для теста
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Создаем игру
+            game_response = await client.post(
+                f"{battle_mechanics_url}/game/create",
+                json=game_data
+            )
+            game_id = game_response.json()["game_id"]
+            
+            # Добавляем корабль
+            ship_data = {
+                "game_id": game_id,
+                "player_id": "player1",
+                "ship_type": "battleship",
+                "position": {"x": 10, "y": 10},
+                "direction": "horizontal"
+            }
+            await client.post(
+                f"{battle_mechanics_url}/game/{game_id}/ships",
+                json=ship_data
+            )
+            
+            # Выполняем ход
+            move_data = {
+                "game_id": game_id,
+                "player_id": "player2",
+                "target_position": {"x": 10, "y": 10}
+            }
+            
+            response = await client.post(
+                f"{battle_mechanics_url}/game/{game_id}/moves",
+                json=move_data
+            )
+            
+            # Проверка результата
+            assert response.status_code == 200
+            data = response.json()
+            assert "hit" in data
+            assert data["hit"] is True 

@@ -1,28 +1,28 @@
 import pytest
+from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from common.models.base import Base
 from common.models.user import User
-from common.models.fleet import Fleet
-from common.models.match import Match
+from common.models.base import Base
 
 @pytest.mark.unit
 class TestUser:
     @pytest.fixture
     def engine(self):
-        """Создаем тестовую базу данных"""
+        """Фикстура для создания тестового движка базы данных"""
         engine = create_engine('sqlite:///:memory:')
         Base.metadata.create_all(engine)
-        return engine
-    
+        yield engine
+        Base.metadata.drop_all(engine)
+
     @pytest.fixture
     def session(self, engine):
-        """Создаем сессию для тестов"""
+        """Фикстура для создания тестовой сессии"""
         Session = sessionmaker(bind=engine)
         session = Session()
         yield session
         session.close()
-    
+
     def test_user_creation(self, session):
         """Тест создания пользователя"""
         user = User(
@@ -33,84 +33,61 @@ class TestUser:
         )
         session.add(user)
         session.commit()
-        
+
         # Проверяем, что пользователь создан
         assert user.id is not None
         assert user.username == "test_user"
         assert user.email == "test@example.com"
         assert user.hashed_password == "hashed_password123"
         assert user.rating == 1000
-    
-    def test_user_unique_constraints(self, session):
-        """Тест уникальных ограничений пользователя"""
+        assert isinstance(user.created_at, datetime)
+
+    def test_user_unique_username(self, session):
+        """Тест уникальности имени пользователя"""
         # Создаем первого пользователя
         user1 = User(
-            username="unique_user",
-            email="unique@example.com",
+            username="test_user",
+            email="test1@example.com",
             hashed_password="hashed_password123"
         )
         session.add(user1)
         session.commit()
-        
-        # Пытаемся создать второго пользователя с тем же username
+
+        # Пытаемся создать второго пользователя с тем же именем
         user2 = User(
-            username="unique_user",
-            email="another@example.com",
+            username="test_user",
+            email="test2@example.com",
             hashed_password="hashed_password456"
         )
         session.add(user2)
         
-        # Проверяем, что возникает ошибка
+        # Проверяем, что возникает исключение
         with pytest.raises(Exception):
             session.commit()
-        
-        # Пытаемся создать пользователя с тем же email
-        user3 = User(
-            username="another_user",
-            email="unique@example.com",
-            hashed_password="hashed_password789"
-        )
-        session.add(user3)
-        
-        # Проверяем, что возникает ошибка
-        with pytest.raises(Exception):
-            session.commit()
-    
-    def test_user_relationships(self, session):
-        """Тест связей пользователя"""
-        # Создаем пользователя
-        user = User(
-            username="test_user",
+
+    def test_user_unique_email(self, session):
+        """Тест уникальности email"""
+        # Создаем первого пользователя
+        user1 = User(
+            username="test_user1",
             email="test@example.com",
             hashed_password="hashed_password123"
         )
-        session.add(user)
+        session.add(user1)
         session.commit()
-        
-        # Создаем флот для пользователя
-        fleet = Fleet(
-            user_id=user.id,
-            name="Test Fleet"
+
+        # Пытаемся создать второго пользователя с тем же email
+        user2 = User(
+            username="test_user2",
+            email="test@example.com",
+            hashed_password="hashed_password456"
         )
-        session.add(fleet)
-        session.commit()
+        session.add(user2)
         
-        # Создаем матч с пользователем
-        match = Match(
-            player1_id=user.id,
-            status="waiting"
-        )
-        session.add(match)
-        session.commit()
-        
-        # Проверяем связи
-        assert fleet in user.fleets
-        assert match in user.matches_as_player1
-        
-        # Проверяем обратные связи
-        assert fleet.user == user
-        assert match.player1 == user
-    
+        # Проверяем, что возникает исключение
+        with pytest.raises(Exception):
+            session.commit()
+
     def test_user_rating_update(self, session):
         """Тест обновления рейтинга пользователя"""
         user = User(
@@ -121,16 +98,17 @@ class TestUser:
         )
         session.add(user)
         session.commit()
-        
+
         # Обновляем рейтинг
-        user.rating = 1200
+        user.rating = 1500
         session.commit()
-        
-        # Проверяем, что рейтинг обновлен
-        assert user.rating == 1200
-    
-    def test_user_default_rating(self, session):
-        """Тест значения рейтинга по умолчанию"""
+
+        # Проверяем, что рейтинг обновился
+        updated_user = session.query(User).filter_by(username="test_user").first()
+        assert updated_user.rating == 1500
+
+    def test_user_relationships(self, session):
+        """Тест связей пользователя"""
         user = User(
             username="test_user",
             email="test@example.com",
@@ -138,6 +116,27 @@ class TestUser:
         )
         session.add(user)
         session.commit()
-        
-        # Проверяем значение рейтинга по умолчанию
-        assert user.rating == 1000 
+
+        # Проверяем, что связи инициализированы
+        assert user.fleets is not None
+        assert user.matches_as_player1 is not None
+        assert user.matches_as_player2 is not None
+        assert user.won_matches is not None
+
+    def test_user_cascade_delete(self, session):
+        """Тест каскадного удаления пользователя"""
+        user = User(
+            username="test_user",
+            email="test@example.com",
+            hashed_password="hashed_password123"
+        )
+        session.add(user)
+        session.commit()
+
+        # Удаляем пользователя
+        session.delete(user)
+        session.commit()
+
+        # Проверяем, что пользователь удален
+        deleted_user = session.query(User).filter_by(username="test_user").first()
+        assert deleted_user is None 

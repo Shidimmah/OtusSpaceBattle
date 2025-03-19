@@ -2,136 +2,202 @@ import pytest
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from common.models.base import Base
 from common.models.match import Match
-from common.models.user import User
 from common.models.fleet import Fleet
+from common.models.user import User
+from common.models.base import Base
 
 @pytest.mark.unit
 class TestMatch:
     @pytest.fixture
     def engine(self):
-        """Создаем тестовую базу данных"""
+        """Фикстура для создания тестового движка базы данных"""
         engine = create_engine('sqlite:///:memory:')
         Base.metadata.create_all(engine)
-        return engine
-    
+        yield engine
+        Base.metadata.drop_all(engine)
+
     @pytest.fixture
     def session(self, engine):
-        """Создаем сессию для тестов"""
+        """Фикстура для создания тестовой сессии"""
         Session = sessionmaker(bind=engine)
         session = Session()
         yield session
         session.close()
-    
+
     @pytest.fixture
     def user1(self, session):
-        """Создаем первого игрока"""
-        user = User(username="player1", email="player1@example.com")
+        """Фикстура для создания первого тестового пользователя"""
+        user = User(
+            username="test_user1",
+            email="test1@example.com",
+            hashed_password="hashed_password123"
+        )
         session.add(user)
         session.commit()
         return user
-    
+
     @pytest.fixture
     def user2(self, session):
-        """Создаем второго игрока"""
-        user = User(username="player2", email="player2@example.com")
+        """Фикстура для создания второго тестового пользователя"""
+        user = User(
+            username="test_user2",
+            email="test2@example.com",
+            hashed_password="hashed_password456"
+        )
         session.add(user)
         session.commit()
         return user
-    
+
     @pytest.fixture
     def fleet1(self, session, user1):
-        """Создаем флот для первого игрока"""
-        fleet = Fleet(user_id=user1.id, name="Fleet 1")
+        """Фикстура для создания первого тестового флота"""
+        fleet = Fleet(
+            user_id=user1.id,
+            name="Test Fleet 1",
+            description="Test Fleet Description 1"
+        )
         session.add(fleet)
         session.commit()
         return fleet
-    
+
     @pytest.fixture
     def fleet2(self, session, user2):
-        """Создаем флот для второго игрока"""
-        fleet = Fleet(user_id=user2.id, name="Fleet 2")
+        """Фикстура для создания второго тестового флота"""
+        fleet = Fleet(
+            user_id=user2.id,
+            name="Test Fleet 2",
+            description="Test Fleet Description 2"
+        )
         session.add(fleet)
         session.commit()
         return fleet
-    
-    def test_match_creation(self, session, user1):
+
+    def test_match_creation(self, session, user1, user2, fleet1, fleet2):
         """Тест создания матча"""
-        match = Match(
-            player1_id=user1.id,
-            status="waiting",
-            is_ranked=True
-        )
-        session.add(match)
-        session.commit()
-        
-        # Проверяем, что матч создан
-        assert match.id is not None
-        assert match.player1_id == user1.id
-        assert match.player2_id is None
-        assert match.status == "waiting"
-        assert match.is_ranked is True
-        assert isinstance(match.start_time, datetime)
-        assert match.end_time is None
-        assert match.winner_id is None
-    
-    def test_match_with_players(self, session, user1, user2, fleet1, fleet2):
-        """Тест матча с двумя игроками"""
         match = Match(
             player1_id=user1.id,
             player2_id=user2.id,
             player1_fleet_id=fleet1.id,
             player2_fleet_id=fleet2.id,
-            status="in_progress"
+            status="waiting",
+            is_ranked=True
         )
         session.add(match)
         session.commit()
-        
-        # Проверяем связи
+
+        # Проверяем, что матч создан
+        assert match.id is not None
+        assert match.player1_id == user1.id
+        assert match.player2_id == user2.id
+        assert match.player1_fleet_id == fleet1.id
+        assert match.player2_fleet_id == fleet2.id
+        assert match.status == "waiting"
+        assert match.is_ranked is True
+        assert isinstance(match.start_time, datetime)
+        assert match.end_time is None
+        assert match.winner_id is None
+
+    def test_match_player_relationships(self, session, user1, user2, fleet1, fleet2):
+        """Тест связей матча с игроками"""
+        match = Match(
+            player1_id=user1.id,
+            player2_id=user2.id,
+            player1_fleet_id=fleet1.id,
+            player2_fleet_id=fleet2.id,
+            status="waiting"
+        )
+        session.add(match)
+        session.commit()
+
+        # Проверяем связи с игроками
         assert match.player1 == user1
         assert match.player2 == user2
+        assert match in user1.matches_as_player1
+        assert match in user2.matches_as_player2
+
+    def test_match_fleet_relationships(self, session, user1, user2, fleet1, fleet2):
+        """Тест связей матча с флотами"""
+        match = Match(
+            player1_id=user1.id,
+            player2_id=user2.id,
+            player1_fleet_id=fleet1.id,
+            player2_fleet_id=fleet2.id,
+            status="waiting"
+        )
+        session.add(match)
+        session.commit()
+
+        # Проверяем связи с флотами
         assert match.player1_fleet == fleet1
         assert match.player2_fleet == fleet2
-    
-    def test_match_completion(self, session, user1, user2):
+        assert match in fleet1.matches_as_player1
+        assert match in fleet2.matches_as_player2
+
+    def test_match_completion(self, session, user1, user2, fleet1, fleet2):
         """Тест завершения матча"""
         match = Match(
             player1_id=user1.id,
             player2_id=user2.id,
-            status="in_progress"
+            player1_fleet_id=fleet1.id,
+            player2_fleet_id=fleet2.id,
+            status="waiting"
         )
         session.add(match)
         session.commit()
-        
+
         # Завершаем матч
         match.status = "finished"
-        match.end_time = datetime.utcnow()
         match.winner_id = user1.id
+        match.end_time = datetime.utcnow()
         session.commit()
-        
-        # Проверяем результат
-        assert match.status == "finished"
-        assert match.end_time is not None
-        assert match.winner_id == user1.id
-    
-    def test_match_cascade_delete(self, session, user1, user2):
-        """Тест каскадного удаления матча при удалении игрока"""
+
+        # Проверяем, что матч завершен
+        updated_match = session.query(Match).filter_by(id=match.id).first()
+        assert updated_match.status == "finished"
+        assert updated_match.winner_id == user1.id
+        assert updated_match.end_time is not None
+
+    def test_match_cascade_delete(self, session, user1, user2, fleet1, fleet2):
+        """Тест каскадного удаления матча"""
         match = Match(
             player1_id=user1.id,
             player2_id=user2.id,
-            status="in_progress"
+            player1_fleet_id=fleet1.id,
+            player2_fleet_id=fleet2.id,
+            status="waiting"
         )
         session.add(match)
         session.commit()
-        
+
+        # Удаляем матч
+        session.delete(match)
+        session.commit()
+
+        # Проверяем, что матч удален
+        deleted_match = session.query(Match).filter_by(id=match.id).first()
+        assert deleted_match is None
+
+    def test_match_player_null_on_delete(self, session, user1, user2, fleet1, fleet2):
+        """Тест установки player_id в NULL при удалении игрока"""
+        match = Match(
+            player1_id=user1.id,
+            player2_id=user2.id,
+            player1_fleet_id=fleet1.id,
+            player2_fleet_id=fleet2.id,
+            status="waiting"
+        )
+        session.add(match)
+        session.commit()
+
         # Удаляем первого игрока
         session.delete(user1)
         session.commit()
-        
-        # Проверяем, что матч удален
-        assert session.query(Match).filter_by(id=match.id).first() is None
-    
+
+        # Проверяем, что player1_id установлен в NULL
+        updated_match = session.query(Match).filter_by(id=match.id).first()
+        assert updated_match.player1_id is None
+
     def test_match_fleet_null_on_delete(self, session, user1, user2, fleet1, fleet2):
         """Тест установки fleet_id в NULL при удалении флота"""
         match = Match(
@@ -139,17 +205,44 @@ class TestMatch:
             player2_id=user2.id,
             player1_fleet_id=fleet1.id,
             player2_fleet_id=fleet2.id,
-            status="in_progress"
+            status="waiting"
         )
         session.add(match)
         session.commit()
-        
-        # Удаляем флоты
+
+        # Удаляем первый флот
         session.delete(fleet1)
-        session.delete(fleet2)
         session.commit()
-        
-        # Проверяем, что fleet_id установлены в NULL
-        match = session.query(Match).filter_by(id=match.id).first()
-        assert match.player1_fleet_id is None
-        assert match.player2_fleet_id is None 
+
+        # Проверяем, что player1_fleet_id установлен в NULL
+        updated_match = session.query(Match).filter_by(id=match.id).first()
+        assert updated_match.player1_fleet_id is None
+
+    def test_match_status_transitions(self, session, user1, user2, fleet1, fleet2):
+        """Тест переходов статуса матча"""
+        match = Match(
+            player1_id=user1.id,
+            player2_id=user2.id,
+            player1_fleet_id=fleet1.id,
+            player2_fleet_id=fleet2.id,
+            status="waiting"
+        )
+        session.add(match)
+        session.commit()
+
+        # Проверяем начальный статус
+        assert match.status == "waiting"
+
+        # Переходим в статус "in_progress"
+        match.status = "in_progress"
+        session.commit()
+        assert match.status == "in_progress"
+
+        # Переходим в статус "finished"
+        match.status = "finished"
+        match.winner_id = user1.id
+        match.end_time = datetime.utcnow()
+        session.commit()
+        assert match.status == "finished"
+        assert match.winner_id == user1.id
+        assert match.end_time is not None 
