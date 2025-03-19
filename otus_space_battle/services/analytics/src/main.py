@@ -8,7 +8,7 @@ from .database import engine, Base
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Analytics Service",
+    title="Сервис аналитики",
     description="Сервис для сбора и анализа данных о кораблях и битвах",
     version="1.0.0"
 )
@@ -28,4 +28,4 @@ app.include_router(events.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Analytics Service API"} 
+    return {"message": "Сервис аналитики API"} 

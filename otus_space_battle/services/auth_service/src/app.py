@@ -12,7 +12,7 @@ import uvicorn
 from common.models.user import User
 from common.utils.database import get_session
 
-app = FastAPI(title="Auth Service")
+app = FastAPI(title="Сервис авторизации")
 
 # Настройки JWT
 SECRET_KEY = "your_secret_key"  # В продакшене использовать безопасный ключ
@@ -81,7 +81,7 @@ async def register(user: UserCreate, session: AsyncSession = Depends(get_session
     if existing_user:
         raise HTTPException(
             status_code=400,
-            detail="Username or email already registered"
+            detail="Имя пользователя или email уже зарегистрированы"
         )
     
     # Создаем нового пользователя

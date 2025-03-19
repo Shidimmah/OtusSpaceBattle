@@ -8,7 +8,7 @@ from .routes import ships
 def create_app() -> FastAPI:
     # Создание приложения FastAPI
     app = FastAPI(
-        title="Resource Management Service",
+        title="Сервис управления игровыми ресурсами",
         description="Сервис управления игровыми ресурсами",
         version="1.0.0"
     )

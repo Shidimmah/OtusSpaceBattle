@@ -2,20 +2,25 @@ import pytest
 from fastapi import FastAPI, Request, Response
 from fastapi.testclient import TestClient
 import time
+from prometheus_client import REGISTRY, CollectorRegistry
 from common.monitoring import (
     setup_monitoring,
     log_function_call,
     get_metrics
 )
 
-@pytest.fixture
+# Используем одну общую фикстуру на уровне модуля, чтобы избежать дублирования
+@pytest.fixture(scope="module")
 def test_app():
     """Фикстура для тестового FastAPI приложения"""
+    # Создаем отдельный реестр для тестов
+    test_registry = CollectorRegistry()
     app = FastAPI()
+    # Здесь можно переопределить реестр в setup_monitoring
     setup_monitoring(app, "test_service", metrics_port=8002)
     return app
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def test_client(test_app):
     """Фикстура для тестового клиента"""
     return TestClient(test_app)

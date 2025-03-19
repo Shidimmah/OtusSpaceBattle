@@ -7,7 +7,7 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Ranking Service"}
+    return {"message": "Сервис рейтинга"}
 
 if __name__ == "__main__":
     # Start metrics server

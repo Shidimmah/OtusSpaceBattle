@@ -8,7 +8,7 @@ from common.utils.database import get_session
 from common.models.fleet import Fleet
 from common.models.ship import Ship, ShipType
 
-app = FastAPI(title="Fleet Management Service")
+app = FastAPI(title="Сервис управления флотом")
 
 class ShipBase(BaseModel):
     ship_type_id: int
@@ -44,18 +44,18 @@ class FleetResponse(FleetBase):
 async def create_fleet(fleet: FleetCreate, session: AsyncSession = Depends(get_session)):
     # Проверяем количество кораблей
     if len(fleet.ships) != 3:
-        raise HTTPException(status_code=400, detail="Fleet must have exactly 3 ships")
+        raise HTTPException(status_code=400, detail="Флот должен содержать ровно 3 корабля")
     
     # Проверяем уникальность позиций
     positions = [ship.position for ship in fleet.ships]
     if len(set(positions)) != len(positions):
-        raise HTTPException(status_code=400, detail="Ship positions must be unique")
+        raise HTTPException(status_code=400, detail="Позиции кораблей должны быть уникальными")
     
     # Проверяем существование типов кораблей
     for ship in fleet.ships:
         ship_type = await session.get(ShipType, ship.ship_type_id)
         if not ship_type:
-            raise HTTPException(status_code=404, detail=f"Ship type {ship.ship_type_id} not found")
+            raise HTTPException(status_code=404, detail=f"Тип корабля {ship.ship_type_id} не найден")
     
     # Создаем флот
     db_fleet = Fleet(
@@ -114,11 +114,11 @@ async def update_fleet(
     # Получаем существующий флот
     db_fleet = await session.get(Fleet, fleet_id)
     if not db_fleet:
-        raise HTTPException(status_code=404, detail="Fleet not found")
+        raise HTTPException(status_code=404, detail="Флот не найден")
     
     # Проверяем владельца
     if db_fleet.user_id != fleet_update.user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this fleet")
+        raise HTTPException(status_code=403, detail="Не авторизован для обновления этого флота")
     
     # Обновляем имя флота
     db_fleet.name = fleet_update.name
@@ -147,11 +147,11 @@ async def update_fleet(
 async def delete_fleet(fleet_id: int, session: AsyncSession = Depends(get_session)):
     db_fleet = await session.get(Fleet, fleet_id)
     if not db_fleet:
-        raise HTTPException(status_code=404, detail="Fleet not found")
+        raise HTTPException(status_code=404, detail="Флот не найден")
     
     await session.delete(db_fleet)
     await session.commit()
-    return {"message": "Fleet deleted"}
+    return {"message": "Флот удален"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 

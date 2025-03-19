@@ -61,7 +61,7 @@ async def health_check():
 
 @app.get("/")
 async def root():
-    return {"message": "API Gateway Service"}
+    return {"message": "Сервис шлюза API"}
 
 if __name__ == "__main__":
     # Start metrics server

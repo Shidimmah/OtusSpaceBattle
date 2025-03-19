@@ -13,8 +13,15 @@
 ## Сервисы
 
 - API Gateway
-- Battle Mechanics
-- Resource Management
-- Analytics
-- Ranking
-- Prometheus (мониторинг) 
+- Auth Service (авторизация и аутентификация)
+- Battle Mechanics (механики боя)
+- Resource Management (управление ресурсами)
+- Analytics (аналитика)
+- Ranking (рейтинги)
+- Game Session Service (управление игровыми сессиями)
+- Matchmaking Service (подбор соперников)
+- Fleet Management Service (управление флотами)
+- Database Service (управление базой данных)
+- Prometheus (мониторинг)
+- Grafana (визуализация метрик)
+- ELK Stack (логирование)
