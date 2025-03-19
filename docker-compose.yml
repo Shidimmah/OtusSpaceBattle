@@ -252,6 +252,40 @@ services:
     networks:
       - app_network
 
+  test_service:
+    build:
+      context: ./otus_space_battle/services/test_service
+      dockerfile: Dockerfile
+    container_name: test_service
+    volumes:
+      - ./otus_space_battle/services:/app/services
+      - ./common:/app/common
+      - ./reports:/app/reports
+    networks:
+      - app_network
+    depends_on:
+      - api_gateway
+      - auth_service
+      - battle_mechanics
+      - matchmaking
+      - ranking
+      - resource_management
+      - analytics
+      - db
+      - elasticsearch
+    environment:
+      - API_GATEWAY_URL=http://api_gateway:8000
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - BATTLE_MECHANICS_URL=http://battle_mechanics:8000
+      - MATCHMAKING_URL=http://matchmaking:8000
+      - RANKING_URL=http://ranking:8000
+      - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
+      - ANALYTICS_URL=http://analytics:8000
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+
 networks:
   app_network:
     driver: bridge

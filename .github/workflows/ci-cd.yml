@@ -66,6 +66,7 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
+        coverage: '/TOTAL.+\s+([0-9]{1,3}%)/'
 
   deploy:
     needs: test
