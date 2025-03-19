@@ -27,13 +27,21 @@ jobs:
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose --version
     
+    - name: Prepare test environment
+      run: |
+        # Создаем необходимые директории
+        mkdir -p common/models common/utils
+        # Копируем common для тестов
+        cp -r otus_space_battle/common/models/* common/models/
+        cp -r otus_space_battle/common/utils/* common/utils/
+        # Создаем директорию для отчетов
+        mkdir -p reports
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         pip install -e otus_space_battle/
-        # Копируем common для тестов
-        cp -r otus_space_battle/common common/
     
     - name: Start services
       run: |
