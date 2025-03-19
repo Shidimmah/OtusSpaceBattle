@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
-from ..src.app import app
-from ..src.models import Resource, ResourceType
+from otus_space_battle.services.resource_management.src.app import app
+from otus_space_battle.services.resource_management.src.models import Resource, ResourceType
 
 client = TestClient(app)
 

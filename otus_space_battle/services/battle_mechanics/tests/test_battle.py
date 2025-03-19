@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
-from ..src.app import app
-from ..src.models import Ship, Position, GameState
+from otus_space_battle.services.battle_mechanics.src.app import app
+from otus_space_battle.services.battle_mechanics.src.models import Ship, Position, GameState
 
 client = TestClient(app)
 
