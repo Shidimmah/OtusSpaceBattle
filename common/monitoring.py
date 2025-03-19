@@ -15,8 +15,11 @@ def setup_monitoring(app, service_name: str, metrics_port: int = 8000, registry=
     Версия setup_monitoring для тестов, которая позволяет использовать отдельный реестр
     для метрик, чтобы избежать дублирования.
     """
-    # При первом вызове очищаем словарь метрик
+    # При первом вызове очищаем словарь метрик для тестов
     if service_name == "test_service" and service_name not in METRICS:
+        # Используем временную копию класса метрик для тестов
+        # Но перезаписываем ее при каждом запуске тестов, чтобы избежать дублирования
+        METRICS.pop("test_service", None)
         METRICS["test_service"] = METRICS["api_gateway"].__class__()
         METRICS["test_service"].service_name = "test_service"
     
