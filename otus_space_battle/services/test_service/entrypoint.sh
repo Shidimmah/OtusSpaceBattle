@@ -5,21 +5,38 @@ set -e
 echo "Ожидаем запуска других сервисов..."
 sleep 10
 
-# Запускаем тесты с покрытием
-echo "Запускаем тесты..."
-python -m pytest --cov=. --cov-report=xml:/app/reports/coverage.xml --cov-report=term-missing --cov-report=html:/app/reports/html_coverage --cov-fail-under=95 \
-  tests/unit/test_auth_service.py \
-  tests/unit/test_battle_mechanics.py \
-  tests/unit/test_resource_management.py \
-  tests/unit/test_analytics.py \
-  tests/unit/test_ranking.py \
-  tests/unit/test_matchmaking.py \
-  tests/integration/
+# Активируем виртуальное окружение, если оно существует
+if [ -d "venv" ]; then
+    source venv/bin/activate
+fi
 
-# Сохраняем статус выполнения тестов
-TEST_EXIT_CODE=$?
+# Устанавливаем зависимости
+pip install -r requirements.txt
 
-echo "Тесты завершены с кодом: $TEST_EXIT_CODE"
+# Запускаем unit тесты с подробным выводом и измерением покрытия
+echo "Запускаем unit тесты..."
+pytest tests/unit/ -v --tb=short \
+  --cov=. \
+  --cov-report=xml:/app/reports/coverage.xml \
+  --cov-report=term-missing \
+  --cov-report=html:/app/reports/html_coverage \
+  --cov-fail-under=95
+
+# Сохраняем статус выполнения unit тестов
+UNIT_TEST_EXIT_CODE=$?
+
+# Запускаем интеграционные тесты
+echo "Запускаем интеграционные тесты..."
+pytest tests/integration/ -v --tb=short
+
+# Сохраняем статус выполнения интеграционных тестов
+INTEGRATION_TEST_EXIT_CODE=$?
+
+# Общий статус выполнения тестов
+TEST_EXIT_CODE=$((UNIT_TEST_EXIT_CODE + INTEGRATION_TEST_EXIT_CODE))
+
+echo "Unit тесты завершены с кодом: $UNIT_TEST_EXIT_CODE"
+echo "Интеграционные тесты завершены с кодом: $INTEGRATION_TEST_EXIT_CODE"
 echo "Отчет о покрытии сохранен в /app/reports/coverage.xml"
 echo "HTML отчет доступен в /app/reports/html_coverage"
 
@@ -32,7 +49,7 @@ fi
 
 # Генерируем отчет для CI/CD
 echo "Генерируем сводку для CI/CD..."
-echo "TOTAL Coverage: " > /app/reports/coverage_summary.txt
+echo "Покрытие кода: " > /app/reports/coverage_summary.txt
 cat /app/reports/coverage.xml | grep -o 'line-rate="[0-9.]*"' | head -1 | cut -d'"' -f2 | awk '{printf "%.1f%%\n", $1*100}' >> /app/reports/coverage_summary.txt
 
 # Переходим в режим ожидания для возможности повторного запуска тестов
