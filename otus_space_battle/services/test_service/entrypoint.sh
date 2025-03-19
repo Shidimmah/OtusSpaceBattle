@@ -16,7 +16,7 @@ pip install -r requirements.txt
 # Запускаем unit тесты с подробным выводом и измерением покрытия
 echo "Запускаем unit тесты..."
 pytest tests/unit/ -v --tb=short \
-  --cov=. \
+  --cov=. --cov-config=.coveragerc \
   --cov-report=xml:/app/reports/coverage.xml \
   --cov-report=term-missing \
   --cov-report=html:/app/reports/html_coverage \
@@ -54,7 +54,7 @@ cat /app/reports/coverage.xml | grep -o 'line-rate="[0-9.]*"' | head -1 | cut -d
 
 # Переходим в режим ожидания для возможности повторного запуска тестов
 echo "Переходим в режим ожидания. Для повторного запуска тестов выполните:"
-echo "docker exec -it test_service pytest --cov=. tests/"
+echo "docker exec -it test_service pytest --cov=. --cov-config=.coveragerc tests/"
 echo "Для остановки нажмите Ctrl+C"
 
 # Бесконечный цикл ожидания

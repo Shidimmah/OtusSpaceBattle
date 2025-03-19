@@ -179,4 +179,61 @@ class ApiGatewayMetrics(ServiceMetrics):
             'api_key_validations_total',
             'Number of API key validations',
             ['result']  # success/failure
-        ) 
+        )
+
+# Счетчики игровых событий
+game_events_total = Counter(
+    'game_events_total',
+    'Total number of game events',
+    ['event_type']
+)
+
+# Счетчики активных игроков
+active_players = Gauge(
+    'active_players',
+    'Number of active players',
+    ['status']
+)
+
+# Гистограмма длительности матчей
+match_duration_seconds = Histogram(
+    'match_duration_seconds',
+    'Duration of matches in seconds',
+    buckets=[30, 60, 120, 300, 600, 1200, 1800, 3600]
+)
+
+# Счетчики использования ресурсов
+resource_usage_bytes = Gauge(
+    'resource_usage_bytes',
+    'Resource usage in bytes',
+    ['resource_type']
+)
+
+# Счетчики API запросов
+api_requests_total = Counter(
+    'api_requests_total',
+    'Total number of API requests',
+    ['endpoint', 'method', 'status']
+)
+
+# Гистограмма длительности API запросов
+api_request_duration_seconds = Histogram(
+    'api_request_duration_seconds',
+    'Duration of API requests in seconds',
+    ['endpoint', 'method'],
+    buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+)
+
+# Счетчики ошибок
+error_total = Counter(
+    'error_total',
+    'Total number of errors',
+    ['error_type']
+)
+
+# Счетчики рейтинга игроков
+player_rating = Gauge(
+    'player_rating',
+    'Player rating',
+    ['player_id']
+) 
