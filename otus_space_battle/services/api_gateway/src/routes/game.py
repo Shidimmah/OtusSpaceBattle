@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/game", tags=["game"])
 
 class GameSettings(BaseModel):
     # Настройки игры
-    map_size: tuple[int, int] = (1000, 1000)  # Размер карты
+    map_size: Tuple[int, int] = (1000, 1000)  # Размер карты
     max_players: int = 4  # Максимальное количество игроков
     game_mode: str = "deathmatch"  # Режим игры
 

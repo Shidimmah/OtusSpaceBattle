@@ -51,6 +51,12 @@ jobs:
         pwd
         ls -la
         ls -la common/
+        
+        # Копируем common для тестов более детально
+        mkdir -p common/models common/utils
+        cp -r otus_space_battle/common/models/* common/models/
+        cp -r otus_space_battle/common/utils/* common/utils/
+        
         export PYTHONPATH=$PYTHONPATH:$(pwd)
         # Запускаем основные тесты и тесты из сервисов
         pytest tests/ otus_space_battle/services/*/tests/ --cov=otus_space_battle --cov=common --cov=otus_space_battle/services --cov-report=term-missing --cov-report=xml
