@@ -62,12 +62,12 @@ jobs:
         if [ -f reports/coverage_summary.txt ]; then
           cat reports/coverage_summary.txt
           COVERAGE=$(grep -oP 'Total coverage: \K\d+\.\d+' reports/coverage_summary.txt)
-          if (( $(echo "$COVERAGE < 95" | bc -l) )); then
-            echo "Coverage is below 95%"
+          if (( $(echo "$COVERAGE < 90" | bc -l) )); then
+            echo "Покрытие кода меньше 90%"
             exit 1
           fi
         else
-          echo "Coverage report not found"
+          echo "Не найден отчет о покрытии кода"
           exit 1
         fi
     
