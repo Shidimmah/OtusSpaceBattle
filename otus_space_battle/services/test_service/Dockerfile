@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем файлы тестов и конфигурации
-COPY common /app/common
+# COPY common /app/common
 COPY tests /app/tests
 COPY entrypoint.sh /app/entrypoint.sh
 
