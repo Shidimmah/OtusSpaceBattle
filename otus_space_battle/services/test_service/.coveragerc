@@ -2,8 +2,8 @@
 source = .
 omit =
     # Исключаем сами тесты из покрытия
-    */tests/*
-    */test_*
+    *tests*
+    *test*
     /app/tests/*
     # Исключаем файлы миграций
     */migrations/*
