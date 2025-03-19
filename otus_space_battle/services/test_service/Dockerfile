@@ -10,7 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем файлы тестов и конфигурации
 COPY common /app/common
-COPY otus_space_battle /app/otus_space_battle
 COPY tests /app/tests
 COPY entrypoint.sh /app/entrypoint.sh
 
