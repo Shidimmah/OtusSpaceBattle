@@ -3,7 +3,7 @@ source = .
 omit =
     # Исключаем сами тесты из покрытия
     */tests/*
-    */test_*.py
+    */test_*
     /app/tests/*
     # Исключаем файлы миграций
     */migrations/*
