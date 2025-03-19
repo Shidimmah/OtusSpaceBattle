@@ -21,10 +21,8 @@ def api_client():
 async def async_api_client():
     """Асинхронный HTTP клиент для тестирования API"""
     client = httpx.AsyncClient(timeout=15.0)
-    try:
-        return client
-    finally:
-        await client.aclose()
+    yield client
+    await client.aclose()
 
 @pytest.fixture
 def api_gateway_url():
