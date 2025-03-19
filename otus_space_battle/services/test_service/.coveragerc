@@ -1,8 +1,9 @@
 [run]
-source = common, services
+source = .
 omit =
     # Исключаем сами тесты из покрытия
     */tests/*
+    */test_*.py
     /app/tests/*
     # Исключаем файлы миграций
     */migrations/*
