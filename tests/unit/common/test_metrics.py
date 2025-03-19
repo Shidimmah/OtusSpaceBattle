@@ -136,9 +136,9 @@ def test_metrics_edge_cases():
     """Тест граничных случаев для метрик"""
     metrics = ServiceMetrics("test_service")
     
-    # Тест отрицательных значений (не должны учитываться)
+    # Тест отрицательных значений (Gauge позволяет отрицательные значения)
     metrics.active_connections.labels(service="test_service").set(-1)
-    assert float(metrics.active_connections.labels(service="test_service")._value.get()) == 0
+    assert float(metrics.active_connections.labels(service="test_service")._value.get()) == -1
     
     # Тест очень больших значений
     large_value = 1e9

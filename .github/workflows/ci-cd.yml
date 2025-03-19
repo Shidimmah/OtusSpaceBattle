@@ -52,7 +52,8 @@ jobs:
         ls -la
         ls -la common/
         export PYTHONPATH=$PYTHONPATH:$(pwd)
-        pytest tests/ --cov=otus_space_battle --cov-report=term-missing --cov-report=xml
+        # Запускаем основные тесты и тесты из сервисов
+        pytest tests/ otus_space_battle/services/*/tests/ --cov=otus_space_battle --cov=common --cov=otus_space_battle/services --cov-report=term-missing --cov-report=xml
     
     - name: Upload coverage report
       uses: codecov/codecov-action@v4
