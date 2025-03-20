@@ -33,11 +33,7 @@ omit =
     */.pytest_cache/*
 
 [report]
-# Не показывать файлы с 100% покрытием
 skip_empty = true
-
-# Игнорировать пропущенные строки в выводе
-skip_covered = true
 
 # Исключить строки из отчета
 exclude_lines =
