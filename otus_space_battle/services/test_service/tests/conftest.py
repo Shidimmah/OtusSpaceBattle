@@ -16,6 +16,9 @@ GAME_EVENT_SERVICE_URL = os.environ.get("GAME_EVENT_SERVICE_URL", "http://game_e
 RATING_SERVICE_URL = os.environ.get("RATING_SERVICE_URL", "http://rating_service:8000")
 RESOURCE_SERVICE_URL = os.environ.get("RESOURCE_SERVICE_URL", "http://resource_service:8000")
 ANALYTICS_SERVICE_URL = os.environ.get("ANALYTICS_SERVICE_URL", "http://analytics_service:8000")
+MONITORING_SERVICE_URL = os.environ.get("MONITORING_SERVICE_URL", "http://monitoring_service:8000")
+SHIP_SERVICE_URL = os.environ.get("SHIP_SERVICE_URL", "http://ship_service:8000")
+USER_SERVICE_URL = os.environ.get("USER_SERVICE_URL", "http://user_service:8000")
 
 @pytest.fixture
 def api_client():
@@ -86,4 +89,19 @@ def resource_service_url():
 @pytest.fixture
 def analytics_service_url():
     """URL сервиса аналитики"""
-    return ANALYTICS_SERVICE_URL 
+    return ANALYTICS_SERVICE_URL
+
+@pytest.fixture
+def monitoring_service_url():
+    """URL сервиса мониторинга"""
+    return MONITORING_SERVICE_URL
+
+@pytest.fixture
+def ship_service_url():
+    """URL сервиса кораблей"""
+    return SHIP_SERVICE_URL
+
+@pytest.fixture
+def user_service_url():
+    """URL сервиса пользователей"""
+    return USER_SERVICE_URL 
