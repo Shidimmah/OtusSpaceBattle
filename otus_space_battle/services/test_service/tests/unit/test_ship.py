@@ -55,17 +55,12 @@ class TestShip:
         ship_type = ShipType(
             name="Test Ship Type",
             description="Test Ship Type Description",
-            fuel_capacity=1000,
-            movement_speed=10,
-            rotation_speed=5,
-            torpedo_capacity=10,
-            torpedo_damage=50,
-            torpedo_speed=20,
-            torpedo_range=100,
-            torpedo_reload_time=5,
-            shield_capacity=100,
-            shield_recharge_rate=5,
-            shield_recharge_delay=2
+            base_fuel_capacity=1000,
+            base_torpedo_capacity=10,
+            base_movement_speed=10.0,
+            base_rotation_speed=5.0,
+            fuel_consumption_move=1.0,
+            fuel_consumption_rotate=0.5
         )
         session.add(ship_type)
         session.commit()

@@ -70,6 +70,19 @@ import time
 import structlog
 from functools import wraps
 
+# Заглушка для FastAPIInstrumentor для тестов
+class FastAPIInstrumentor:
+    @staticmethod
+    def instrument_app(app):
+        pass
+
+# Заглушки для трассировки
+class TracerProvider:
+    pass
+
+class MeterProvider:
+    pass
+
 # Настройка структурированного логирования
 logger = structlog.get_logger()
 
