@@ -1,4 +1,4 @@
-from prometheus_client import start_http_server, Counter, Histogram, Gauge
+from prometheus_client import start_http_server
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
@@ -15,6 +15,7 @@ from .metrics import (
     AnalyticsMetrics,
     ApiGatewayMetrics
 )
+from .metric_utils import create_counter, create_histogram, create_gauge
 
 # Настройка структурированного логирования
 logger = structlog.get_logger()
@@ -94,6 +95,9 @@ def setup_monitoring(app, service_name: str, metrics_port: int = 8000):
         finally:
             # Уменьшаем счетчик активных соединений
             service_metrics.active_connections.labels(service=service_name).dec()
+    
+    # Возвращаем middleware для тестирования
+    return monitoring_middleware
 
 def log_function_call(func):
     """Декоратор для логирования вызовов функций"""
@@ -128,22 +132,3 @@ def log_function_call(func):
             raise
             
     return wrapper 
-
-def create_counter(name: str, documentation: str, labels: List[str] = None, service_name: str = None) -> Counter:
-    """Создание счетчика Prometheus с предотвращением автоматической регистрации"""
-    if service_name:
-        name = f"{service_name}_{name}"
-    return Counter(name, documentation, labels or [], registry=None)
-
-def create_histogram(name: str, documentation: str, labels: List[str] = None, 
-                    buckets=None, service_name: str = None) -> Histogram:
-    """Создание гистограммы Prometheus с предотвращением автоматической регистрации"""
-    if service_name:
-        name = f"{service_name}_{name}"
-    return Histogram(name, documentation, labels or [], buckets=buckets, registry=None)
-
-def create_gauge(name: str, documentation: str, labels: List[str] = None, service_name: str = None) -> Gauge:
-    """Создание измерителя Prometheus с предотвращением автоматической регистрации"""
-    if service_name:
-        name = f"{service_name}_{name}"
-    return Gauge(name, documentation, labels or [], registry=None) 
