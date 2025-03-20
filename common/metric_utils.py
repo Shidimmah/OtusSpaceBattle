@@ -49,4 +49,15 @@ def create_gauge(name: str, documentation: str, labels: List[str] = None, servic
     """
     if service_name:
         name = f"{service_name}_{name}"
-    return Gauge(name, documentation, labels or [], registry=None) 
+    return Gauge(name, documentation, labels or [], registry=None)
+
+def reset_metrics_for_testing():
+    """Сбросить состояние метрик для тестирования
+    
+    Эта функция удаляет все собранные метрики из глобального реестра Prometheus,
+    что позволяет избежать конфликтов между тестами. Используется в фикстурах pytest.
+    """
+    from prometheus_client import REGISTRY
+    collectors = list(REGISTRY._collector_to_names.keys())
+    for collector in collectors:
+        REGISTRY.unregister(collector) 
