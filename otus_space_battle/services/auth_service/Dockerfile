@@ -1,11 +1,19 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Копируем файлы зависимостей и устанавливаем их
+COPY auth_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src/ .
-COPY ../common /app/common
+# Копируем код сервиса
+COPY auth_service/src/ .
 
+# Копируем общие модули
+COPY common /app/common
+
+# Открываем порт
+EXPOSE 8000
+
+# Запускаем приложение
 CMD ["python", "app.py"]

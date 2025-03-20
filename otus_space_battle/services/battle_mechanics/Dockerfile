@@ -2,9 +2,16 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Копируем зависимости
+COPY battle_mechanics/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Копируем код сервиса и общие модули
+COPY battle_mechanics/main.py .
+COPY common /app/common
 
-CMD ["python", "otus_space_battle/services/battle_mechanics/main.py"] 
+# Открываем порт
+EXPOSE 8000
+
+# Запускаем FastAPI с Uvicorn
+CMD ["python", "main.py"] 

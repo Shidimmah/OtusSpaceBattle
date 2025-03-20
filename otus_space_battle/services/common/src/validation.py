@@ -16,7 +16,7 @@ class ShipTemplate(BaseModel):
         required_fields = ['health', 'shield', 'speed', 'attack']
         for field in required_fields:
             if field not in v:
-                raise ValueError(f"Missing required parameter: {field}")
+                raise ValueError(f"Отсутствует обязательный параметр: {field}")
         return v
 
 class User(BaseModel):
@@ -28,7 +28,7 @@ class User(BaseModel):
     @validator('password')
     def validate_password(cls, v):
         if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$', v):
-            raise ValueError('Password must contain at least one letter and one number')
+            raise ValueError('Пароль должен содержать хотя бы одну букву и одну цифру')
         return v
 
 class Fleet(BaseModel):
@@ -41,9 +41,9 @@ class Fleet(BaseModel):
     def validate_ships(cls, v):
         for ship in v:
             if 'template_id' not in ship or 'quantity' not in ship:
-                raise ValueError('Each ship must have template_id and quantity')
+                raise ValueError('Каждый корабль должен иметь template_id и количество')
             if ship['quantity'] < 1:
-                raise ValueError('Ship quantity must be greater than 0')
+                raise ValueError('Количество кораблей должно быть больше 0')
         return v
 
 class BattleRequest(BaseModel):
@@ -61,7 +61,7 @@ class AnalyticsRequest(BaseModel):
     @validator('end_date')
     def validate_dates(cls, v, values):
         if 'start_date' in values and v < values['start_date']:
-            raise ValueError('end_date must be greater than start_date')
+            raise ValueError('end_date должен быть больше start_date')
         return v
 
 class MatchmakingRequest(BaseModel):
@@ -74,5 +74,5 @@ class MatchmakingRequest(BaseModel):
     def validate_preferences(cls, v):
         allowed_keys = {'min_players', 'max_players', 'battle_type', 'difficulty'}
         if not all(key in allowed_keys for key in v.keys()):
-            raise ValueError('Invalid preference key')
+            raise ValueError('Неверный ключ предпочтения')
         return v 

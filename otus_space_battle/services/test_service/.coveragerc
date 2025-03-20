@@ -1,0 +1,54 @@
+[run]
+include = 
+    /app/common/*
+    /app/services/*
+    /app/app/*
+omit =
+    # Исключаем сами тесты из покрытия
+    /app/tests/*
+    /app/*/tests/*
+    /app/*/*/tests/*
+    /app/*/*/*/tests/*
+    /app/*/test_*.py
+    /app/*/*/test_*.py
+    /app/*/*/*/test_*.py
+    /app/*/*/*/*/test_*.py
+    # Исключаем файлы миграций
+    */migrations/*
+    # Исключаем настройки
+    */conftest.py
+    */pytest.ini
+    */setup.py
+    # Исключаем виртуальное окружение
+    */.venv/*
+    */env/*
+    # Исключаем файлы Docker
+    */Dockerfile*
+    */docker-compose.yml
+    # Исключаем скрипты CI/CD
+    */.github/*
+    */.gitlab-ci.yml
+    # Исключаем кэш Python
+    */__pycache__/*
+    */.pytest_cache/*
+
+[report]
+; skip_empty = true
+
+# Исключить строки из отчета
+exclude_lines =
+    # Не включать в отчет assert-ы, используемые для проверки типа
+    pragma: no cover
+    # Не включать в отчет блоки, запускаемые только при выполнении скрипта напрямую
+    if __name__ == .__main__.:
+    # Не включать в отчет блоки, доступные только в режиме отладки
+    def __repr__
+    if self.debug:
+    # Не включать в отчет блоки, связанные с ошибками
+    raise NotImplementedError
+    except ImportError:
+    except Exception as e:
+
+[html]
+# Директория для HTML-отчета
+directory = reports/html_coverage 

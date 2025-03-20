@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from datetime import timedelta
-from ..src.app import app, create_access_token, verify_password
-from ..src.models import UserCreate, TokenData
+from otus_space_battle.services.auth_service.src.app import app, create_access_token, verify_password
+from otus_space_battle.services.auth_service.src.models import UserCreate, TokenData
 
 client = TestClient(app)
 

@@ -14,8 +14,10 @@ services:
 
   api_gateway:
     build:
-      context: ./otus_space_battle/services/api_gateway
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: api_gateway/Dockerfile
+    ports:
+      - "8000:8000"
     environment:
       - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
       - BATTLE_MECHANICS_URL=http://battle_mechanics:8000
@@ -33,15 +35,17 @@ services:
 
   auth_service:
     build:
-      context: ./otus_space_battle/services/auth_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: auth_service/Dockerfile
+    ports:
+      - "8001:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_DB=space_battle
-      - JWT_SECRET=your-secret-key-here
+      - JWT_SECRET=your_secret_key
       - JWT_ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
     depends_on:
@@ -51,8 +55,10 @@ services:
 
   resource_management:
     build:
-      context: ./otus_space_battle/services/resource_management
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: resource_management/Dockerfile
+    ports:
+      - "8002:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -68,8 +74,10 @@ services:
 
   battle_mechanics:
     build:
-      context: ./otus_space_battle/services/battle_mechanics
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: battle_mechanics/Dockerfile
+    ports:
+      - "8003:8000"
     environment:
       - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
       - AUTH_SERVICE_URL=http://auth_service:8000
@@ -81,8 +89,8 @@ services:
 
   ranking:
     build:
-      context: ./otus_space_battle/services/ranking
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: ranking/Dockerfile
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -98,8 +106,10 @@ services:
 
   analytics:
     build:
-      context: ./otus_space_battle/services/analytics
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: analytics/Dockerfile
+    ports:
+      - "8004:8000"
     environment:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - AUTH_SERVICE_URL=http://auth_service:8000
@@ -111,8 +121,10 @@ services:
 
   game_session:
     build:
-      context: ./otus_space_battle/services/game_session_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: game_session_service/Dockerfile
+    ports:
+      - "8005:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -128,8 +140,10 @@ services:
 
   matchmaking:
     build:
-      context: ./otus_space_battle/services/matchmaking_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: matchmaking_service/Dockerfile
+    ports:
+      - "8006:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -147,8 +161,10 @@ services:
 
   fleet_management:
     build:
-      context: ./otus_space_battle/services/fleet_management_service
-      dockerfile: Dockerfile
+      context: ./otus_space_battle/services
+      dockerfile: fleet_management_service/Dockerfile
+    ports:
+      - "8007:8000"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -180,10 +196,17 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
       - app_network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   kibana:
     image: kibana:8.12.1
@@ -205,6 +228,8 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.50.1
+    ports:
+      - "9090:9090"
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
@@ -226,6 +251,40 @@ services:
       - prometheus
     networks:
       - app_network
+
+  test_service:
+    build:
+      context: ./otus_space_battle/services/test_service
+      dockerfile: Dockerfile
+    container_name: test_service
+    volumes:
+      - ./otus_space_battle/services:/app/services
+      - ./common:/app/common
+      - ./reports:/app/reports
+    networks:
+      - app_network
+    depends_on:
+      - api_gateway
+      - auth_service
+      - battle_mechanics
+      - matchmaking
+      - ranking
+      - resource_management
+      - analytics
+      - db
+      - elasticsearch
+    environment:
+      - API_GATEWAY_URL=http://api_gateway:8000
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - BATTLE_MECHANICS_URL=http://battle_mechanics:8000
+      - MATCHMAKING_URL=http://matchmaking:8000
+      - RANKING_URL=http://ranking:8000
+      - RESOURCE_MANAGEMENT_URL=http://resource_management:8000
+      - ANALYTICS_URL=http://analytics:8000
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
 
 networks:
   app_network:

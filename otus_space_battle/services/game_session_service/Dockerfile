@@ -1,21 +1,19 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Копируем файлы зависимостей
-COPY requirements.txt .
-
-# Устанавливаем зависимости
+# Копируем файлы зависимостей и устанавливаем их
+COPY game_session_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Копируем код сервиса
+COPY game_session_service/src/ .
+
 # Копируем общие модули
-COPY ../../common /app/common
+COPY common /app/common
 
-# Копируем код приложения
-COPY . /app/
-
-# Открываем порт для FastAPI
-EXPOSE 8004
+# Открываем порт
+EXPOSE 8000
 
 # Запускаем приложение
-CMD ["python", "-m", "src.app"] 
+CMD ["python", "app.py"] 

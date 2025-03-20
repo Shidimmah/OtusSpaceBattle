@@ -7,7 +7,7 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Battle Mechanics Service"}
+    return {"message": "Сервис механики боя"}
 
 if __name__ == "__main__":
     # Start metrics server
@@ -15,5 +15,5 @@ if __name__ == "__main__":
     start_http_server(metrics_port)
     
     # Start main API server
-    api_port = 8001
+    api_port = 8000
     uvicorn.run(app, host="0.0.0.0", port=api_port) 

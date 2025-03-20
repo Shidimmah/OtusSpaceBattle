@@ -5,7 +5,7 @@ from .database import get_db
 from .routes import analytics
 from ..common.utils.auth import verify_token
 
-app = FastAPI(title="Analytics Service")
+app = FastAPI(title="Сервис аналитики")
 
 @app.get("/health")
 async def health_check():

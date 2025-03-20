@@ -6,10 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 import uvicorn
 
-from common.models import Match, User, Fleet
+from common.models.match import Match
+from common.models.user import User
+from common.models.fleet import Fleet
 from common.utils.database import get_session
 
-app = FastAPI(title="Matchmaking Service")
+app = FastAPI(title="Сервис матчмейкинга")
 
 class MatchCreate(BaseModel):
     player1_id: int
@@ -45,11 +47,11 @@ async def create_match(
     # Проверяем существование игрока и флота
     player = await session.get(User, match.player1_id)
     if not player:
-        raise HTTPException(status_code=404, detail="Player not found")
+        raise HTTPException(status_code=404, detail="Игрок не найден")
     
     fleet = await session.get(Fleet, match.player1_fleet_id)
     if not fleet or fleet.user_id != match.player1_id:
-        raise HTTPException(status_code=404, detail="Fleet not found or doesn't belong to player")
+        raise HTTPException(status_code=404, detail="Флот не найден или не принадлежит игроку")
     
     # Проверяем, нет ли уже активного матча у игрока
     query = select(Match).where(
@@ -64,7 +66,7 @@ async def create_match(
     if existing_match:
         raise HTTPException(
             status_code=400,
-            detail="Player already has an active match"
+            detail="Игрок уже имеет активный матч"
         )
     
     # Создаем новый матч
@@ -95,13 +97,13 @@ async def update_match(
 ):
     db_match = await session.get(Match, match_id)
     if not db_match:
-        raise HTTPException(status_code=404, detail="Match not found")
+        raise HTTPException(status_code=404, detail="Матч не найден")
     
     if match_update.player2_id is not None:
         # Проверяем существование второго игрока
         player2 = await session.get(User, match_update.player2_id)
         if not player2:
-            raise HTTPException(status_code=404, detail="Player 2 not found")
+            raise HTTPException(status_code=404, detail="Второй игрок не найден")
         
         # Проверяем флот второго игрока
         if match_update.player2_fleet_id:
@@ -109,7 +111,7 @@ async def update_match(
             if not fleet2 or fleet2.user_id != match_update.player2_id:
                 raise HTTPException(
                     status_code=404,
-                    detail="Fleet not found or doesn't belong to player 2"
+                    detail="Флот не найден или не принадлежит второму игроку"
                 )
         
         db_match.player2_id = match_update.player2_id
@@ -129,7 +131,7 @@ async def update_match(
         if match_update.winner_id not in [db_match.player1_id, db_match.player2_id]:
             raise HTTPException(
                 status_code=400,
-                detail="Winner must be one of the players"
+                detail="Победитель должен быть одним из игроков"
             )
         db_match.winner_id = match_update.winner_id
     
@@ -157,4 +159,4 @@ async def health_check():
     return {"status": "healthy"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8002) 
+    uvicorn.run(app, host="0.0.0.0", port=8000) 

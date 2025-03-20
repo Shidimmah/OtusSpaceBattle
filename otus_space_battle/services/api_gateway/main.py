@@ -8,10 +8,10 @@ from prometheus_client import start_http_server
 
 app = FastAPI()
 
-AUTH_SERVICE_URL = "http://auth_service:8001"
-MATCHMAKING_SERVICE_URL = "http://matchmaking_service:8002"
+AUTH_SERVICE_URL = "http://auth_service:8000"
+MATCHMAKING_SERVICE_URL = "http://matchmaking:8000"
 
-SECRET_KEY = "your_secret_key"  # ❗ Должен совпадать с ключом из `auth_service`
+SECRET_KEY = "your_secret_key"  
 
 class UserLogin(BaseModel):
     username: str
@@ -51,7 +51,7 @@ async def proxy_auth(path: str, request: Request):
     return await proxy_request(target_url, request)
 
 @app.api_route("/matchmaking/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def proxy_auth(path: str, request: Request):
+async def proxy_matchmaking(path: str, request: Request):
     target_url = f"{MATCHMAKING_SERVICE_URL}/matchmaking/{path}"
     return await proxy_request(target_url, request)
 
@@ -61,7 +61,7 @@ async def health_check():
 
 @app.get("/")
 async def root():
-    return {"message": "API Gateway Service"}
+    return {"message": "Сервис шлюза API"}
 
 if __name__ == "__main__":
     # Start metrics server

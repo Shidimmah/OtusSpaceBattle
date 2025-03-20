@@ -5,7 +5,7 @@ from .database import get_db
 from .routes import resources
 from ..common.utils.auth import verify_token
 
-app = FastAPI(title="Resource Management Service")
+app = FastAPI(title="Сервис управления ресурсами")
 
 @app.get("/health")
 async def health_check():

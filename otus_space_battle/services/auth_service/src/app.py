@@ -9,14 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uvicorn
 
-from common.models import User
+from common.models.user import User
 from common.utils.database import get_session
-from ..config import settings
 
-app = FastAPI(title="Auth Service")
+app = FastAPI(title="Сервис авторизации")
 
 # Настройки JWT
-SECRET_KEY = "your-secret-key"  # В продакшене использовать безопасный ключ
+SECRET_KEY = "your_secret_key"  # В продакшене использовать безопасный ключ
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -82,7 +81,7 @@ async def register(user: UserCreate, session: AsyncSession = Depends(get_session
     if existing_user:
         raise HTTPException(
             status_code=400,
-            detail="Username or email already registered"
+            detail="Имя пользователя или email уже зарегистрированы"
         )
     
     # Создаем нового пользователя
@@ -153,4 +152,4 @@ async def health_check():
     return {"status": "healthy"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001) 
+    uvicorn.run(app, host="0.0.0.0", port=8000) 
