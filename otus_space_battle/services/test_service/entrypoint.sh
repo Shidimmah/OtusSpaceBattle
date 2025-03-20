@@ -65,11 +65,21 @@ EOL
 # Вместо попытки исправления файла monitoring.py, запишем упрощенный файл
 echo "Записываем упрощенный monitoring.py..."
 cat > common/monitoring.py << 'EOL'
-from prometheus_client import start_http_server, Counter, Histogram, Gauge
+from prometheus_client import start_http_server, Counter, Histogram, Gauge, REGISTRY
 import time
 import structlog
 from functools import wraps
 import inspect
+
+# Функция для создания метрик с отключенной авторегистрацией
+def create_counter(name, description, labels=None):
+    return Counter(name, description, labels or [], registry=None)
+
+def create_histogram(name, description, labels=None, buckets=None):
+    return Histogram(name, description, labels or [], buckets or [0.1, 0.5, 1.0], registry=None)
+
+def create_gauge(name, description, labels=None):
+    return Gauge(name, description, labels or [], registry=None)
 
 # Заглушка для FastAPIInstrumentor для тестов
 class FastAPIInstrumentor:
@@ -97,26 +107,26 @@ class ServiceMetrics:
         self.service_name = service_name
         
         # Общие метрики
-        self.request_count = Counter(
-            'request_count_total',
+        self.request_count = create_counter(
+            f'{service_name}_request_count_total',
             'Total number of requests',
             ['service', 'endpoint', 'method']
         )
         
-        self.request_latency = Histogram(
-            'request_latency_seconds',
+        self.request_latency = create_histogram(
+            f'{service_name}_request_latency_seconds',
             'Request latency in seconds',
             ['service', 'endpoint']
         )
         
-        self.error_count = Counter(
-            'error_count_total',
+        self.error_count = create_counter(
+            f'{service_name}_error_count_total',
             'Total number of errors',
             ['service', 'error_type']
         )
         
-        self.active_connections = Gauge(
-            'active_connections',
+        self.active_connections = create_gauge(
+            f'{service_name}_active_connections',
             'Number of active connections',
             ['service']
         )
@@ -128,23 +138,23 @@ class BattleMechanicsMetrics(ServiceMetrics):
         super().__init__("battle_mechanics")
         
         # Специфичные метрики
-        self.movement_count = Counter(
-            'movement_commands_total',
+        self.movement_count = create_counter(
+            'battle_mechanics_movement_commands_total',
             'Total number of movement commands',
             ['result']
         )
-        self.rotation_count = Counter(
-            'rotation_commands_total',
+        self.rotation_count = create_counter(
+            'battle_mechanics_rotation_commands_total',
             'Total number of rotation commands',
             ['result']
         )
-        self.fire_count = Counter(
-            'fire_commands_total',
+        self.fire_count = create_counter(
+            'battle_mechanics_fire_commands_total',
             'Total number of fire commands',
             ['result']
         )
-        self.collision_count = Counter(
-            'collision_checks_total',
+        self.collision_count = create_counter(
+            'battle_mechanics_collision_checks_total',
             'Total number of collision checks',
             ['result']
         )
@@ -155,23 +165,23 @@ class ResourceManagementMetrics(ServiceMetrics):
         super().__init__("resource_management")
         
         # Специфичные метрики
-        self.fuel_usage = Counter(
-            'fuel_usage_total',
+        self.fuel_usage = create_counter(
+            'resource_management_fuel_usage_total',
             'Total amount of fuel used',
             ['ship_id']
         )
-        self.torpedo_usage = Counter(
-            'torpedo_usage_total',
+        self.torpedo_usage = create_counter(
+            'resource_management_torpedo_usage_total',
             'Total number of torpedoes used',
             ['ship_id']
         )
-        self.resource_check_count = Counter(
-            'resource_checks_total',
+        self.resource_check_count = create_counter(
+            'resource_management_resource_checks_total',
             'Total number of resource availability checks',
             ['resource_type', 'result']
         )
-        self.active_ships = Gauge(
-            'active_ships',
+        self.active_ships = create_gauge(
+            'resource_management_active_ships',
             'Number of active ships',
             ['game_id']
         )
