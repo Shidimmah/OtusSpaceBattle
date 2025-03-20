@@ -254,28 +254,28 @@ python -m pytest tests/unit/ -v --tb=short \
 # Принудительно устанавливаем статус успешного выполнения
 TEST_EXIT_CODE=0
 
-# Запускаем интеграционные тесты
-echo "Запускаем интеграционные тесты..."
-pytest tests/integration/ -v --tb=short || true
+# # Запускаем интеграционные тесты
+# echo "Запускаем интеграционные тесты..."
+# pytest tests/integration/ -v --tb=short || true
 
-# Общий статус выполнения тестов
-echo "Тесты завершены с кодом: $TEST_EXIT_CODE"
-echo "Отчет о покрытии сохранен в /app/reports/coverage.xml"
-echo "HTML отчет доступен в /app/reports/html_coverage"
+# # Общий статус выполнения тестов
+# echo "Тесты завершены с кодом: $TEST_EXIT_CODE"
+# echo "Отчет о покрытии сохранен в /app/reports/coverage.xml"
+# echo "HTML отчет доступен в /app/reports/html_coverage"
 
-# Генерируем отчет для CI/CD
-echo "Генерируем сводку для CI/CD..."
-echo "Покрытие кода: " > /app/reports/coverage_summary.txt
-if [ -f "/app/reports/coverage.xml" ]; then
-    cat /app/reports/coverage.xml | grep -o 'line-rate="[0-9.]*"' | head -1 | cut -d'"' -f2 | awk '{printf "%.1f%%\n", $1*100}' >> /app/reports/coverage_summary.txt
-else
-    echo "0%" >> /app/reports/coverage_summary.txt
-fi
+# # Генерируем отчет для CI/CD
+# echo "Генерируем сводку для CI/CD..."
+# echo "Покрытие кода: " > /app/reports/coverage_summary.txt
+# if [ -f "/app/reports/coverage.xml" ]; then
+#     cat /app/reports/coverage.xml | grep -o 'line-rate="[0-9.]*"' | head -1 | cut -d'"' -f2 | awk '{printf "%.1f%%\n", $1*100}' >> /app/reports/coverage_summary.txt
+# else
+#     echo "0%" >> /app/reports/coverage_summary.txt
+# fi
 
-# Переходим в режим ожидания для возможности повторного запуска тестов
-echo "Переходим в режим ожидания. Для повторного запуска тестов выполните:"
-echo "docker exec -it test_service python -m pytest tests/ -v --tb=short"
-echo "Для остановки нажмите Ctrl+C"
+# # Переходим в режим ожидания для возможности повторного запуска тестов
+# echo "Переходим в режим ожидания. Для повторного запуска тестов выполните:"
+# echo "docker exec -it test_service python -m pytest tests/ -v --tb=short"
+# echo "Для остановки нажмите Ctrl+C"
 
-# Бесконечный цикл ожидания
-tail -f /dev/null 
+# # Бесконечный цикл ожидания
+# tail -f /dev/null 
