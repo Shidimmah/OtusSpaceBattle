@@ -6,6 +6,17 @@ from common.models.match import Match
 from common.models.fleet import Fleet
 from common.models.user import User
 from common.models.base import Base
+import json
+import time
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.middleware.requestid import RequestIDMiddleware
+
 
 @pytest.mark.unit
 class TestMatch:
@@ -70,6 +81,13 @@ class TestMatch:
         session.add(fleet)
         session.commit()
         return fleet
+
+    @pytest.fixture(autouse=True)
+    def reset_metrics():
+        """Сбрасывать метрики перед каждым тестом"""
+        from common.metric_utils import reset_metrics_for_testing
+        reset_metrics_for_testing()
+        yield
 
     def test_match_creation(self, session, user1, user2, fleet1, fleet2):
         """Тест создания матча"""
@@ -247,4 +265,52 @@ class TestMatch:
         session.commit()
         assert match.status == "finished"
         assert match.winner_id == user1.id
-        assert match.end_time is not None 
+        assert match.end_time is not None
+
+    @property
+    def get_coordinates(self):
+        return json.loads(self.coordinates)
+
+    def set_coordinates(self, coords_dict):
+        self.coordinates = json.dumps(coords_dict)
+
+    def reset_metrics_for_testing():
+        """Сбросить состояние метрик для тестирования"""
+        # Сбросить счетчики в глобальном реестре
+        from prometheus_client import REGISTRY
+        collectors = list(REGISTRY._collector_to_names.keys())
+        for collector in collectors:
+            REGISTRY.unregister(collector)
+
+    async def monitoring_middleware(request: Request, call_next):
+        start_time = time.time()
+        path = request.url.path
+        method = request.method
+        
+        # Увеличиваем счетчик запросов
+        METRICS.http_requests_total.inc({'path': path, 'method': method})
+        
+        try:
+            # Выполняем запрос
+            response = await call_next(request)
+            # Измеряем и логируем время запроса
+            process_time = time.time() - start_time
+            METRICS.http_request_duration.observe({'path': path, 'method': method}, process_time)
+            
+            # Логирование успешного запроса
+            logger.info(f"Request: {method} {path} - Status: {response.status_code} - Duration: {process_time:.4f}s")
+            return response
+        
+        except Exception as e:
+            # Увеличиваем счетчик ошибок
+            METRICS.http_errors_total.inc({'path': path, 'method': method, 'error': str(e)})
+            
+            # Логирование ошибки
+            process_time = time.time() - start_time
+            logger.error(f"Error processing request: {method} {path} - Error: {str(e)} - Duration: {process_time:.4f}s")
+            
+            # Возвращаем структурированный ответ об ошибке
+            return JSONResponse(
+                status_code=500, 
+                content={"detail": "Internal server error", "error_type": str(type(e).__name__)}
+            ) 
