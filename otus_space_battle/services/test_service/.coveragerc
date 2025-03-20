@@ -1,5 +1,5 @@
 [run]
-source = common, services
+source = .
 omit =
     # Исключаем сами тесты из покрытия
     *tests*
