@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .base import Base
+import json
 
 class GameEvent(Base):
     __tablename__ = "game_events"
@@ -17,4 +18,14 @@ class GameEvent(Base):
     # Отношения
     match = relationship("Match")
     ship = relationship("Ship", foreign_keys=[ship_id])
-    target_ship = relationship("Ship", foreign_keys=[target_ship_id]) 
+    target_ship = relationship("Ship", foreign_keys=[target_ship_id])
+    
+    def get_event_data(self):
+        """Получить данные события в виде словаря"""
+        if not self.event_data:
+            return {}
+        return json.loads(self.event_data)
+    
+    def set_event_data(self, data_dict):
+        """Установить данные события из словаря"""
+        self.event_data = json.dumps(data_dict) 

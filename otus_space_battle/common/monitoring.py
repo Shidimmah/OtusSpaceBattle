@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from functools import wraps
 import time
 import structlog
-from typing import Optional, Type
+from typing import Optional, Type, List, Dict, Any
 from .metrics import (
     ServiceMetrics,
     BattleMechanicsMetrics,
@@ -15,6 +15,7 @@ from .metrics import (
     AnalyticsMetrics,
     ApiGatewayMetrics
 )
+from .metric_utils import create_counter, create_histogram, create_gauge
 
 # Настройка структурированного логирования
 logger = structlog.get_logger()
@@ -94,6 +95,9 @@ def setup_monitoring(app, service_name: str, metrics_port: int = 8000):
         finally:
             # Уменьшаем счетчик активных соединений
             service_metrics.active_connections.labels(service=service_name).dec()
+    
+    # Возвращаем middleware для тестирования
+    return monitoring_middleware
 
 def log_function_call(func):
     """Декоратор для логирования вызовов функций"""

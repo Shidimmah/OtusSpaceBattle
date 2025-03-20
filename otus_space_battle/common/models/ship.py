@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from .base import Base
+import json
 
 class ShipType(Base):
     __tablename__ = "ship_types"
@@ -27,7 +28,18 @@ class Ship(Base):
     fleet_id = Column(Integer, ForeignKey("fleets.id", ondelete="CASCADE"), nullable=False)
     ship_type_id = Column(Integer, ForeignKey("ship_types.id", ondelete="RESTRICT"), nullable=False)
     position = Column(Integer, nullable=False)  # Позиция корабля во флоте (1-3)
+    coordinates = Column(String, nullable=True)  # Координаты корабля в JSON формате
     
     # Отношения
     fleet = relationship("Fleet", back_populates="ships")
-    ship_type = relationship("ShipType", back_populates="ships") 
+    ship_type = relationship("ShipType", back_populates="ships")
+    
+    def get_coordinates(self):
+        """Получить координаты корабля в виде словаря"""
+        if not self.coordinates:
+            return {"x": 0, "y": 0}
+        return json.loads(self.coordinates)
+    
+    def set_coordinates(self, coords_dict):
+        """Установить координаты корабля из словаря"""
+        self.coordinates = json.dumps(coords_dict) 
