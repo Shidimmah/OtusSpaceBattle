@@ -16,10 +16,15 @@ pip install -r requirements.txt
 # Устанавливаем переменную среды PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:/app
 
+# Копируем файл pytest.ini в корень, чтобы убедиться, что маркеры работают
+cp /app/services/test_service/pytest.ini /app/
+
 # Запускаем unit тесты с подробным выводом и измерением покрытия
 echo "Запускаем unit тесты..."
+# Исключаем проблемные тесты и явно указываем директории для покрытия
 pytest tests/unit/ -v --tb=short -k "not test_database and not test_metrics and not test_monitoring" \
-  --cov=. --cov-config=.coveragerc \
+  --cov=common,services,app \
+  --cov-config=.coveragerc \
   --cov-report=xml:/app/reports/coverage.xml \
   --cov-report=term-missing \
   --cov-report=html:/app/reports/html_coverage \
@@ -57,7 +62,7 @@ cat /app/reports/coverage.xml | grep -o 'line-rate="[0-9.]*"' | head -1 | cut -d
 
 # Переходим в режим ожидания для возможности повторного запуска тестов
 echo "Переходим в режим ожидания. Для повторного запуска тестов выполните:"
-echo "docker exec -it test_service pytest --cov=. --cov-config=.coveragerc tests/"
+echo "docker exec -it test_service pytest --cov=common,services,app --cov-config=.coveragerc tests/"
 echo "Для остановки нажмите Ctrl+C"
 
 # Бесконечный цикл ожидания

@@ -1,25 +1,30 @@
 [run]
-source = .
+include = 
+    /app/common/*
+    /app/services/*
+    /app/app/*
 omit =
     # Исключаем сами тесты из покрытия
-    *tests*
-    *test_*
-    */tests/*
     /app/tests/*
-    */test_*.py
-    tests
+    /app/*/tests/*
+    /app/*/*/tests/*
+    /app/*/*/*/tests/*
+    /app/*/test_*.py
+    /app/*/*/test_*.py
+    /app/*/*/*/test_*.py
+    /app/*/*/*/*/test_*.py
     # Исключаем файлы миграций
     */migrations/*
     # Исключаем настройки
-    conftest.py
-    pytest.ini
-    setup.py
+    */conftest.py
+    */pytest.ini
+    */setup.py
     # Исключаем виртуальное окружение
     */.venv/*
     */env/*
     # Исключаем файлы Docker
     */Dockerfile*
-    docker-compose.yml
+    */docker-compose.yml
     # Исключаем скрипты CI/CD
     */.github/*
     */.gitlab-ci.yml
