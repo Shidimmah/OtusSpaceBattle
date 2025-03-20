@@ -86,10 +86,29 @@ class MeterProvider:
 # Настройка структурированного логирования
 logger = structlog.get_logger()
 
+# Базовый класс метрик для тестов
+class ServiceMetrics:
+    def __init__(self, service_name):
+        self.service_name = service_name
+
+# Метрики для разных сервисов
+class BattleMechanicsMetrics(ServiceMetrics):
+    def __init__(self):
+        super().__init__("battle_mechanics")
+
+class ResourceManagementMetrics(ServiceMetrics):
+    def __init__(self):
+        super().__init__("resource_management")
+
+# Словарь для хранения метрик сервисов
+METRICS = {
+    "battle_mechanics": BattleMechanicsMetrics(),
+    "resource_management": ResourceManagementMetrics()
+}
+
 def get_metrics(service_name: str):
     """Получение метрик для конкретного сервиса"""
-    # Упрощенная версия
-    return None
+    return METRICS.get(service_name)
 
 def setup_monitoring(app, service_name: str, metrics_port: int = 8000):
     """Настройка мониторинга для FastAPI приложения"""

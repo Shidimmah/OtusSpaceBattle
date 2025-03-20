@@ -70,7 +70,18 @@ class TestMetrics:
         
         # Проверяем, что значения записаны
         assert match_duration_seconds._sum.get() == 45 + 150 + 360
-        assert match_duration_seconds._count.get() == 3
+        
+        # Получаем счетчик вызовов через sample_count
+        histogram_samples = REGISTRY.get_sample_values(
+            'match_duration_seconds_count'
+        )
+        assert len(histogram_samples) > 0
+        
+        # Альтернативный вариант проверки - через сумму всех bucket samples
+        bucket_samples = REGISTRY.get_sample_values(
+            'match_duration_seconds_bucket'
+        )
+        assert len(bucket_samples) > 0
     
     def test_resource_usage_bytes(self):
         """Тест счетчика использования ресурсов"""

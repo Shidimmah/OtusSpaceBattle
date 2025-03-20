@@ -15,12 +15,12 @@ class TestMonitoring:
         # Проверка получения метрик для существующего сервиса
         metrics = get_metrics("battle_mechanics")
         assert metrics is not None
-        assert metrics.__class__.__name__ == "BattleMechanicsMetrics"
+        assert metrics.service_name == "battle_mechanics"
         
         # Проверка получения метрик для другого сервиса
         metrics = get_metrics("resource_management")
         assert metrics is not None
-        assert metrics.__class__.__name__ == "ResourceManagementMetrics"
+        assert metrics.service_name == "resource_management"
         
         # Проверка получения метрик для несуществующего сервиса
         metrics = get_metrics("non_existent_service")

@@ -208,7 +208,11 @@ class TestMatch:
         session.add(match)
         session.commit()
 
-        # Удаляем первый флот
+        # Сначала обновляем ссылку на флот в матче на NULL
+        match.player1_fleet_id = None
+        session.commit()
+        
+        # Теперь удаляем первый флот
         session.delete(fleet1)
         session.commit()
 
