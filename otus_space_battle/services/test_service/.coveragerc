@@ -33,7 +33,7 @@ omit =
     */.pytest_cache/*
 
 [report]
-skip_empty = true
+; skip_empty = true
 
 # Исключить строки из отчета
 exclude_lines =
