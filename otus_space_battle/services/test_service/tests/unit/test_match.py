@@ -81,14 +81,6 @@ class TestMatch:
         session.commit()
         return fleet
 
-    @pytest.fixture(autouse=True)
-    def reset_metrics(self):
-        """Сбрасывать метрики перед каждым тестом"""
-        # Временно отключаем сброс метрик
-        # from common.metric_utils import reset_metrics_for_testing
-        # reset_metrics_for_testing()
-        yield
-
     def test_match_creation(self, session, user1, user2, fleet1, fleet2):
         """Тест создания матча"""
         match = Match(
