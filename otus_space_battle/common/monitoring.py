@@ -1,4 +1,4 @@
-from prometheus_client import start_http_server
+from prometheus_client import start_http_server, Counter, Histogram, Gauge
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from functools import wraps
 import time
 import structlog
-from typing import Optional, Type
+from typing import Optional, Type, List, Dict, Any
 from .metrics import (
     ServiceMetrics,
     BattleMechanicsMetrics,
@@ -128,3 +128,22 @@ def log_function_call(func):
             raise
             
     return wrapper 
+
+def create_counter(name: str, documentation: str, labels: List[str] = None, service_name: str = None) -> Counter:
+    """Создание счетчика Prometheus с предотвращением автоматической регистрации"""
+    if service_name:
+        name = f"{service_name}_{name}"
+    return Counter(name, documentation, labels or [], registry=None)
+
+def create_histogram(name: str, documentation: str, labels: List[str] = None, 
+                    buckets=None, service_name: str = None) -> Histogram:
+    """Создание гистограммы Prometheus с предотвращением автоматической регистрации"""
+    if service_name:
+        name = f"{service_name}_{name}"
+    return Histogram(name, documentation, labels or [], buckets=buckets, registry=None)
+
+def create_gauge(name: str, documentation: str, labels: List[str] = None, service_name: str = None) -> Gauge:
+    """Создание измерителя Prometheus с предотвращением автоматической регистрации"""
+    if service_name:
+        name = f"{service_name}_{name}"
+    return Gauge(name, documentation, labels or [], registry=None) 
