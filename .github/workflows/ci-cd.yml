@@ -53,23 +53,23 @@ jobs:
         chmod +x ./scripts/wait_for_services.sh
         ./scripts/wait_for_services.sh
     
-    # - name: Run tests
-    #   run: |
-    #     # Запускаем тесты через Docker
-    #     docker-compose up --exit-code-from test_service --abort-on-container-exit test_service
+    - name: Run tests
+      run: |
+        # Запускаем тесты через Docker
+        docker-compose up --exit-code-from test_service --abort-on-container-exit test_service
         
-    #     # Проверяем результаты тестов
-    #     if [ -f reports/coverage_summary.txt ]; then
-    #       cat reports/coverage_summary.txt
-    #       COVERAGE=$(grep -oP 'Total coverage: \K\d+\.\d+' reports/coverage_summary.txt)
-    #       if (( $(echo "$COVERAGE < 50" | bc -l) )); then
-    #         echo "Покрытие кода меньше 80%"
-    #         exit 1
-    #       fi
-    #     else
-    #       echo "Не найден отчет о покрытии кода"
-    #       exit 1
-    #     fi
+        # Проверяем результаты тестов
+        if [ -f reports/coverage_summary.txt ]; then
+          cat reports/coverage_summary.txt
+          COVERAGE=$(grep -oP 'Total coverage: \K\d+\.\d+' reports/coverage_summary.txt)
+          # if (( $(echo "$COVERAGE < 50" | bc -l) )); then
+          #   echo "Покрытие кода меньше 80%"
+          #   exit 1
+          # fi
+        else
+          echo "Не найден отчет о покрытии кода"
+          exit 1
+        fi
     
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
