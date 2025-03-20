@@ -65,22 +65,26 @@ EOL
 # Вместо попытки исправления файла monitoring.py, запишем упрощенный файл
 echo "Записываем упрощенный monitoring.py..."
 cat > common/monitoring.py << 'EOL'
-from prometheus_client import start_http_server
+from prometheus_client import start_http_server, Counter, Histogram, Gauge
 import time
 import structlog
 from functools import wraps
+import inspect
 
 # Заглушка для FastAPIInstrumentor для тестов
 class FastAPIInstrumentor:
     @staticmethod
     def instrument_app(app):
-        pass
+        """Инструментирование FastAPI приложения"""
+        return None
 
 # Заглушки для трассировки
 class TracerProvider:
+    """Заглушка провайдера трассировки"""
     pass
 
 class MeterProvider:
+    """Заглушка провайдера метрик"""
     pass
 
 # Настройка структурированного логирования
@@ -88,17 +92,89 @@ logger = structlog.get_logger()
 
 # Базовый класс метрик для тестов
 class ServiceMetrics:
+    """Базовый класс для метрик сервисов"""
     def __init__(self, service_name):
         self.service_name = service_name
+        
+        # Общие метрики
+        self.request_count = Counter(
+            'request_count_total',
+            'Total number of requests',
+            ['service', 'endpoint', 'method']
+        )
+        
+        self.request_latency = Histogram(
+            'request_latency_seconds',
+            'Request latency in seconds',
+            ['service', 'endpoint']
+        )
+        
+        self.error_count = Counter(
+            'error_count_total',
+            'Total number of errors',
+            ['service', 'error_type']
+        )
+        
+        self.active_connections = Gauge(
+            'active_connections',
+            'Number of active connections',
+            ['service']
+        )
 
 # Метрики для разных сервисов
 class BattleMechanicsMetrics(ServiceMetrics):
+    """Метрики для сервиса боевой механики"""
     def __init__(self):
         super().__init__("battle_mechanics")
+        
+        # Специфичные метрики
+        self.movement_count = Counter(
+            'movement_commands_total',
+            'Total number of movement commands',
+            ['result']
+        )
+        self.rotation_count = Counter(
+            'rotation_commands_total',
+            'Total number of rotation commands',
+            ['result']
+        )
+        self.fire_count = Counter(
+            'fire_commands_total',
+            'Total number of fire commands',
+            ['result']
+        )
+        self.collision_count = Counter(
+            'collision_checks_total',
+            'Total number of collision checks',
+            ['result']
+        )
 
 class ResourceManagementMetrics(ServiceMetrics):
+    """Метрики для сервиса управления ресурсами"""
     def __init__(self):
         super().__init__("resource_management")
+        
+        # Специфичные метрики
+        self.fuel_usage = Counter(
+            'fuel_usage_total',
+            'Total amount of fuel used',
+            ['ship_id']
+        )
+        self.torpedo_usage = Counter(
+            'torpedo_usage_total',
+            'Total number of torpedoes used',
+            ['ship_id']
+        )
+        self.resource_check_count = Counter(
+            'resource_checks_total',
+            'Total number of resource availability checks',
+            ['resource_type', 'result']
+        )
+        self.active_ships = Gauge(
+            'active_ships',
+            'Number of active ships',
+            ['game_id']
+        )
 
 # Словарь для хранения метрик сервисов
 METRICS = {
@@ -112,8 +188,20 @@ def get_metrics(service_name: str):
 
 def setup_monitoring(app, service_name: str, metrics_port: int = 8000):
     """Настройка мониторинга для FastAPI приложения"""
+    # Запуск трассировки OpenTelemetry
+    trace_provider = TracerProvider()
+    meter_provider = MeterProvider()
+    
+    # Инструментирование FastAPI
+    FastAPIInstrumentor.instrument_app(app)
+    
     # Запуск сервера метрик Prometheus
     start_http_server(metrics_port)
+    
+    # Получаем метрики для сервиса
+    service_metrics = get_metrics(service_name)
+    if not service_metrics:
+        raise ValueError(f"Unknown service: {service_name}")
     
     # Добавляем middleware для сбора метрик
     @app.middleware("http")
@@ -121,7 +209,22 @@ def setup_monitoring(app, service_name: str, metrics_port: int = 8000):
         start_time = time.time()
         
         try:
+            # Увеличиваем счетчик активных соединений
+            service_metrics.active_connections.labels(service=service_name).inc()
+            
             response = await call_next(request)
+            
+            # Записываем метрики запроса
+            service_metrics.request_count.labels(
+                service=service_name,
+                endpoint=request.url.path,
+                method=request.method
+            ).inc()
+            
+            service_metrics.request_latency.labels(
+                service=service_name,
+                endpoint=request.url.path
+            ).observe(time.time() - start_time)
             
             # Логируем запрос
             logger.info(
@@ -135,6 +238,12 @@ def setup_monitoring(app, service_name: str, metrics_port: int = 8000):
             return response
             
         except Exception as e:
+            # Записываем ошибки
+            service_metrics.error_count.labels(
+                service=service_name,
+                error_type=type(e).__name__
+            ).inc()
+            
             # Логируем ошибку
             logger.error(
                 "request_error",
@@ -144,15 +253,24 @@ def setup_monitoring(app, service_name: str, metrics_port: int = 8000):
                 error_type=type(e).__name__
             )
             raise
+            
+        finally:
+            # Уменьшаем счетчик активных соединений
+            service_metrics.active_connections.labels(service=service_name).dec()
 
 def log_function_call(func):
     """Декоратор для логирования вызовов функций"""
+    if not inspect.iscoroutinefunction(func):
+        raise TypeError(f"Function {func.__name__} is not a coroutine function. Only async functions are supported.")
+        
     @wraps(func)
     async def wrapper(*args, **kwargs):
         start_time = time.time()
         logger.info(
             "function_call",
             function=func.__name__,
+            args=args,
+            kwargs=kwargs
         )
         
         try:

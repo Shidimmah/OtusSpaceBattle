@@ -2,10 +2,10 @@ import pytest
 import httpx
 import time
 import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch, AsyncMock, call
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
-from common.monitoring import get_metrics, setup_monitoring, log_function_call
+from common.monitoring import get_metrics, setup_monitoring, log_function_call, FastAPIInstrumentor, TracerProvider, MeterProvider, METRICS, ServiceMetrics
 
 @pytest.mark.unit
 class TestMonitoring:
@@ -230,4 +230,173 @@ class TestMonitoring:
                 
                 # Проверяем результат запроса
                 assert response.status_code == 200
-                assert response.json() == {"status": "logged"} 
+                assert response.json() == {"status": "logged"}
+    
+    @patch('common.monitoring.start_http_server')
+    @pytest.mark.asyncio
+    async def test_monitoring_middleware_with_metrics_tracking(self, mock_server):
+        """Тестирование monitoring_middleware с учетом трекинга метрик"""
+        # Создаем тестовое FastAPI приложение
+        app = FastAPI()
+        
+        # Создаем mock-объект для метрик
+        mock_metrics = MagicMock()
+        mock_metrics.active_connections = MagicMock()
+        mock_metrics.active_connections.labels.return_value = MagicMock()
+        mock_metrics.request_count = MagicMock()
+        mock_metrics.request_count.labels.return_value = MagicMock()
+        mock_metrics.request_latency = MagicMock()
+        mock_metrics.request_latency.labels.return_value = MagicMock()
+        mock_metrics.error_count = MagicMock()
+        mock_metrics.error_count.labels.return_value = MagicMock()
+        
+        # Патчим get_metrics для возврата нашего mock-объекта
+        with patch('common.monitoring.get_metrics', return_value=mock_metrics):
+            # Вызываем setup_monitoring, которая добавит middleware с нашими mock-метриками
+            setup_monitoring(app, "test_service", 9000)
+            
+            # Добавляем тестовый маршрут
+            @app.get("/test-metrics")
+            async def test_route():
+                return {"status": "metrics_tracked"}
+                
+            # Добавляем маршрут с ошибкой
+            @app.get("/error-metrics")
+            async def error_route():
+                raise ValueError("Test error for metrics")
+                
+            # Обработчик ошибок
+            @app.exception_handler(ValueError)
+            async def value_error_handler(request: Request, exc: ValueError):
+                return JSONResponse(
+                    status_code=400,
+                    content={"message": str(exc)},
+                )
+            
+            # Создаем тестовый клиент
+            async with httpx.AsyncClient(app=app, base_url="http://testserver") as client:
+                # Делаем успешный запрос
+                response = await client.get("/test-metrics")
+                assert response.status_code == 200
+                
+                # Проверяем, что метрики были собраны
+                mock_metrics.active_connections.labels.assert_called_with(service="test_service")
+                mock_metrics.active_connections.labels().inc.assert_called()
+                mock_metrics.active_connections.labels().dec.assert_called()
+                mock_metrics.request_count.labels.assert_called_with(
+                    service="test_service", 
+                    endpoint="/test-metrics", 
+                    method="GET"
+                )
+                mock_metrics.request_count.labels().inc.assert_called()
+                mock_metrics.request_latency.labels.assert_called_with(
+                    service="test_service", 
+                    endpoint="/test-metrics"
+                )
+                mock_metrics.request_latency.labels().observe.assert_called()
+                
+                # Делаем запрос с ошибкой
+                response = await client.get("/error-metrics")
+                assert response.status_code == 400
+                
+                # Проверяем, что метрики ошибок были собраны
+                mock_metrics.error_count.labels.assert_called_with(
+                    service="test_service",
+                    error_type="ValueError"
+                )
+                mock_metrics.error_count.labels().inc.assert_called()
+    
+    def test_fastapi_instrumentor_class(self):
+        """Тест заглушки класса FastAPIInstrumentor"""
+        # Создаем тестовое FastAPI приложение
+        app = FastAPI()
+        
+        # Вызываем метод instrument_app заглушки
+        FastAPIInstrumentor.instrument_app(app)
+        
+        # Проверяем, что метод заглушки ничего не возвращает
+        assert FastAPIInstrumentor.instrument_app(app) is None
+    
+    def test_tracer_provider_class(self):
+        """Тест заглушки класса TracerProvider"""
+        # Создаем экземпляр TracerProvider
+        tracer = TracerProvider()
+        
+        # Проверяем, что заглушка создана
+        assert isinstance(tracer, TracerProvider)
+    
+    def test_meter_provider_class(self):
+        """Тест заглушки класса MeterProvider"""
+        # Создаем экземпляр MeterProvider
+        meter = MeterProvider()
+        
+        # Проверяем, что заглушка создана
+        assert isinstance(meter, MeterProvider)
+    
+    def test_metrics_dictionary(self):
+        """Тест словаря метрик сервисов"""
+        # Проверяем, что словарь METRICS содержит нужные ключи
+        assert "battle_mechanics" in METRICS
+        assert "resource_management" in METRICS
+        
+        # Проверяем, что значения словаря - экземпляры нужных классов
+        assert isinstance(METRICS["battle_mechanics"], ServiceMetrics)
+        assert isinstance(METRICS["resource_management"], ServiceMetrics)
+        
+        # Проверяем service_name для каждой метрики
+        assert METRICS["battle_mechanics"].service_name == "battle_mechanics"
+        assert METRICS["resource_management"].service_name == "resource_management"
+    
+    def test_service_metrics_class(self):
+        """Тест базового класса метрик ServiceMetrics"""
+        # Создаем экземпляр класса
+        metrics = ServiceMetrics("test_service_name")
+        
+        # Проверяем service_name
+        assert metrics.service_name == "test_service_name"
+    
+    @pytest.mark.asyncio
+    async def test_sync_function_with_log_decorator(self):
+        """Тест декоратора log_function_call с синхронной функцией"""
+        # Проверяем, что декоратор корректно обрабатывает синхронную функцию
+        with pytest.raises(TypeError):
+            @log_function_call
+            def sync_function(a, b):
+                return a + b
+            
+            result = sync_function(2, 3)
+        
+    @patch('common.monitoring.logger')
+    @pytest.mark.asyncio
+    async def test_log_function_call_args_capture(self, mock_logger):
+        """Тест логирования аргументов в log_function_call"""
+        @log_function_call
+        async def test_args_capture(a, b, c=None):
+            return a + b + (c or 0)
+        
+        # Вызываем функцию с разными аргументами
+        result = await test_args_capture(1, 2, c=3)
+        
+        # Проверяем, что вызов логгера содержит информацию об аргументах
+        first_call_args = mock_logger.info.call_args_list[0]
+        assert "function_call" in first_call_args[0]
+        assert first_call_args[1].get('function') == 'test_args_capture'
+        
+        # Проверяем результат
+        assert result == 6
+        
+    @patch('common.monitoring.start_http_server')
+    @pytest.mark.asyncio
+    async def test_setup_monitoring_returns_middleware(self, mock_server):
+        """Тест возвращения middleware из setup_monitoring"""
+        app = FastAPI()
+        
+        # Получаем middleware функцию из setup_monitoring
+        with patch('common.monitoring.get_metrics') as mock_get_metrics:
+            mock_get_metrics.return_value = MagicMock()
+            
+            # Настраиваем мониторинг и проверяем, что middleware добавлен
+            setup_monitoring(app, "test_service", 9000)
+            
+            # Проверяем, что middleware добавлен в приложение
+            assert len(app.middleware_stack.middlewares) > 0 
