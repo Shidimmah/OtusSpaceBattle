@@ -193,17 +193,12 @@ class TestShip:
         ship_type1 = ShipType(
             name="Test Ship Type",
             description="Test Ship Type Description 1",
-            fuel_capacity=1000,
-            movement_speed=10,
-            rotation_speed=5,
-            torpedo_capacity=10,
-            torpedo_damage=50,
-            torpedo_speed=20,
-            torpedo_range=100,
-            torpedo_reload_time=5,
-            shield_capacity=100,
-            shield_recharge_rate=5,
-            shield_recharge_delay=2
+            base_fuel_capacity=1000,
+            base_torpedo_capacity=10,
+            base_movement_speed=10.0,
+            base_rotation_speed=5.0,
+            fuel_consumption_move=1.0,
+            fuel_consumption_rotate=0.5
         )
         session.add(ship_type1)
         session.commit()
@@ -212,17 +207,12 @@ class TestShip:
         ship_type2 = ShipType(
             name="Test Ship Type",
             description="Test Ship Type Description 2",
-            fuel_capacity=2000,
-            movement_speed=20,
-            rotation_speed=10,
-            torpedo_capacity=20,
-            torpedo_damage=100,
-            torpedo_speed=30,
-            torpedo_range=200,
-            torpedo_reload_time=10,
-            shield_capacity=200,
-            shield_recharge_rate=10,
-            shield_recharge_delay=4
+            base_fuel_capacity=2000,
+            base_torpedo_capacity=20,
+            base_movement_speed=20.0,
+            base_rotation_speed=10.0,
+            fuel_consumption_move=2.0,
+            fuel_consumption_rotate=1.0
         )
         session.add(ship_type2)
         

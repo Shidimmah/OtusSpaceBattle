@@ -10,6 +10,12 @@ MATCHMAKING_URL = os.environ.get("MATCHMAKING_URL", "http://matchmaking:8000")
 RANKING_URL = os.environ.get("RANKING_URL", "http://ranking:8000")
 RESOURCE_MANAGEMENT_URL = os.environ.get("RESOURCE_MANAGEMENT_URL", "http://resource_management:8000")
 ANALYTICS_URL = os.environ.get("ANALYTICS_URL", "http://analytics:8000")
+FLEET_SERVICE_URL = os.environ.get("FLEET_SERVICE_URL", "http://fleet_service:8000")
+MATCH_SERVICE_URL = os.environ.get("MATCH_SERVICE_URL", "http://match_service:8000")
+GAME_EVENT_SERVICE_URL = os.environ.get("GAME_EVENT_SERVICE_URL", "http://game_event_service:8000")
+RATING_SERVICE_URL = os.environ.get("RATING_SERVICE_URL", "http://rating_service:8000")
+RESOURCE_SERVICE_URL = os.environ.get("RESOURCE_SERVICE_URL", "http://resource_service:8000")
+ANALYTICS_SERVICE_URL = os.environ.get("ANALYTICS_SERVICE_URL", "http://analytics_service:8000")
 
 @pytest.fixture
 def api_client():
@@ -50,4 +56,34 @@ def resource_management_url():
 @pytest.fixture
 def analytics_url():
     """URL сервиса аналитики"""
-    return ANALYTICS_URL 
+    return ANALYTICS_URL
+
+@pytest.fixture
+def fleet_service_url():
+    """URL сервиса флота"""
+    return FLEET_SERVICE_URL
+
+@pytest.fixture
+def match_service_url():
+    """URL сервиса матчей"""
+    return MATCH_SERVICE_URL
+
+@pytest.fixture
+def game_event_service_url():
+    """URL сервиса игровых событий"""
+    return GAME_EVENT_SERVICE_URL
+
+@pytest.fixture
+def rating_service_url():
+    """URL сервиса рейтинга"""
+    return RATING_SERVICE_URL
+
+@pytest.fixture
+def resource_service_url():
+    """URL сервиса ресурсов"""
+    return RESOURCE_SERVICE_URL
+
+@pytest.fixture
+def analytics_service_url():
+    """URL сервиса аналитики"""
+    return ANALYTICS_SERVICE_URL 

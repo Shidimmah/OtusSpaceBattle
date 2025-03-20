@@ -54,8 +54,7 @@ class TestMatch:
         """Фикстура для создания первого тестового флота"""
         fleet = Fleet(
             user_id=user1.id,
-            name="Test Fleet 1",
-            description="Test Fleet Description 1"
+            name="Test Fleet 1"
         )
         session.add(fleet)
         session.commit()
@@ -66,8 +65,7 @@ class TestMatch:
         """Фикстура для создания второго тестового флота"""
         fleet = Fleet(
             user_id=user2.id,
-            name="Test Fleet 2",
-            description="Test Fleet Description 2"
+            name="Test Fleet 2"
         )
         session.add(fleet)
         session.commit()

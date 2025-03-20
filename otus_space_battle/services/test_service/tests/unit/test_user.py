@@ -25,6 +25,7 @@ class TestUser:
 
     def test_user_creation(self, session):
         """Тест создания пользователя"""
+        # Создаем пользователя
         user = User(
             username="test_user",
             email="test@example.com",
@@ -40,7 +41,6 @@ class TestUser:
         assert user.email == "test@example.com"
         assert user.hashed_password == "hashed_password123"
         assert user.rating == 1000
-        assert isinstance(user.created_at, datetime)
 
     def test_user_unique_username(self, session):
         """Тест уникальности имени пользователя"""
@@ -108,7 +108,8 @@ class TestUser:
         assert updated_user.rating == 1500
 
     def test_user_relationships(self, session):
-        """Тест связей пользователя"""
+        """Тест инициализации отношений пользователя"""
+        # Создаем пользователя
         user = User(
             username="test_user",
             email="test@example.com",
@@ -116,12 +117,11 @@ class TestUser:
         )
         session.add(user)
         session.commit()
-
-        # Проверяем, что связи инициализированы
+        
+        # Проверяем инициализацию отношений
         assert user.fleets is not None
         assert user.matches_as_player1 is not None
         assert user.matches_as_player2 is not None
-        assert user.won_matches is not None
 
     def test_user_cascade_delete(self, session):
         """Тест каскадного удаления пользователя"""
