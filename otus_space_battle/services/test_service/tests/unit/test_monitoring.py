@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch, AsyncMock, call
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from common.monitoring import get_metrics, setup_monitoring, log_function_call, FastAPIInstrumentor, TracerProvider, MeterProvider, METRICS, ServiceMetrics
+from common.metric_utils import create_counter, create_histogram, create_gauge
+from common.metrics import BattleMechanicsMetrics, ResourceManagementMetrics, RankingMetrics, AnalyticsMetrics, ApiGatewayMetrics
 
 @pytest.mark.unit
 class TestMonitoring:
@@ -400,3 +402,177 @@ class TestMonitoring:
             
             # Проверяем, что middleware добавлен в приложение
             assert len(app.middleware_stack.middlewares) > 0 
+
+    @pytest.mark.unit
+    def test_service_metrics_creation(self):
+        """Тестирование создания и инициализации метрик в разных сервисах"""
+        # Проверка метрик для боевой механики
+        battle_metrics = BattleMechanicsMetrics()
+        assert battle_metrics.service_name == "battle_mechanics"
+        assert hasattr(battle_metrics, "request_count")
+        assert hasattr(battle_metrics, "request_latency")
+        assert hasattr(battle_metrics, "error_count")
+        assert hasattr(battle_metrics, "active_connections")
+        assert hasattr(battle_metrics, "movement_count")
+        assert hasattr(battle_metrics, "rotation_count")
+        assert hasattr(battle_metrics, "fire_count")
+        assert hasattr(battle_metrics, "collision_count")
+        
+        # Проверка метрик для управления ресурсами
+        resource_metrics = ResourceManagementMetrics()
+        assert resource_metrics.service_name == "resource_management"
+        assert hasattr(resource_metrics, "fuel_usage")
+        assert hasattr(resource_metrics, "torpedo_usage")
+        assert hasattr(resource_metrics, "resource_check_count")
+        assert hasattr(resource_metrics, "active_ships")
+        
+        # Проверка метрик для рейтинга
+        ranking_metrics = RankingMetrics()
+        assert ranking_metrics.service_name == "ranking"
+        assert hasattr(ranking_metrics, "rank_updates")
+        assert hasattr(ranking_metrics, "points_awarded")
+        assert hasattr(ranking_metrics, "leaderboard_queries")
+        assert hasattr(ranking_metrics, "active_players")
+        
+        # Проверка метрик для аналитики
+        analytics_metrics = AnalyticsMetrics()
+        assert analytics_metrics.service_name == "analytics"
+        assert hasattr(analytics_metrics, "events_processed")
+        assert hasattr(analytics_metrics, "stats_queries")
+        assert hasattr(analytics_metrics, "event_processing_time")
+        assert hasattr(analytics_metrics, "stored_events")
+        
+        # Проверка метрик для API Gateway
+        api_gateway_metrics = ApiGatewayMetrics()
+        assert api_gateway_metrics.service_name == "api_gateway"
+        assert hasattr(api_gateway_metrics, "upstream_latency")
+        assert hasattr(api_gateway_metrics, "upstream_errors")
+        assert hasattr(api_gateway_metrics, "active_games")
+        assert hasattr(api_gateway_metrics, "api_key_validations")
+
+    @pytest.mark.unit
+    def test_metric_registry_isolation(self):
+        """Тестирование изоляции метрик между сервисами"""
+        # Создаем экземпляры метрик для разных сервисов
+        battle_metrics = BattleMechanicsMetrics()
+        resource_metrics = ResourceManagementMetrics()
+        
+        # Проверяем, что метрики имеют разные имена сервисов
+        assert battle_metrics.service_name != resource_metrics.service_name
+        
+        # Проверяем, что у каждого сервиса свой набор специфичных метрик
+        assert hasattr(battle_metrics, "movement_count")
+        assert not hasattr(resource_metrics, "movement_count")
+        
+        assert hasattr(resource_metrics, "fuel_usage")
+        assert not hasattr(battle_metrics, "fuel_usage")
+        
+        # Проверяем, что базовые метрики присутствуют у обоих сервисов
+        assert hasattr(battle_metrics, "request_count")
+        assert hasattr(resource_metrics, "request_count")
+        assert hasattr(battle_metrics, "request_latency")
+        assert hasattr(resource_metrics, "request_latency")
+
+    @pytest.mark.unit
+    def test_create_counter(self):
+        """Тестирование функции create_counter"""
+        # Создание счетчика без имени сервиса
+        counter = create_counter("test_counter", "Test counter documentation", ["label1", "label2"])
+        assert counter.name == "test_counter"
+        assert counter._documentation == "Test counter documentation"
+        assert counter._labelnames == ("label1", "label2")
+        
+        # Создание счетчика с именем сервиса
+        service_counter = create_counter("service_counter", "Service counter", ["label1"], service_name="test_service")
+        assert service_counter.name == "test_service_service_counter"
+        assert service_counter._documentation == "Service counter"
+        assert service_counter._labelnames == ("label1",)
+
+    @pytest.mark.unit
+    def test_create_histogram(self):
+        """Тестирование функции create_histogram"""
+        # Создание гистограммы без имени сервиса
+        histogram = create_histogram("test_histogram", "Test histogram documentation", 
+                                     ["label1"], buckets=[0.1, 0.5, 1.0])
+        assert histogram.name == "test_histogram"
+        assert histogram._documentation == "Test histogram documentation"
+        assert histogram._labelnames == ("label1",)
+        assert 0.1 in histogram._buckets
+        assert 0.5 in histogram._buckets
+        assert 1.0 in histogram._buckets
+        
+        # Создание гистограммы с именем сервиса
+        service_histogram = create_histogram("service_histogram", "Service histogram", 
+                                            ["label1"], buckets=[0.1, 0.5], service_name="test_service")
+        assert service_histogram.name == "test_service_service_histogram"
+        assert service_histogram._documentation == "Service histogram"
+        assert service_histogram._labelnames == ("label1",)
+        assert 0.1 in service_histogram._buckets
+        assert 0.5 in service_histogram._buckets
+
+    @pytest.mark.unit
+    def test_create_gauge(self):
+        """Тестирование функции create_gauge"""
+        # Создание gauge без имени сервиса
+        gauge = create_gauge("test_gauge", "Test gauge documentation", ["label1"])
+        assert gauge.name == "test_gauge"
+        assert gauge._documentation == "Test gauge documentation"
+        assert gauge._labelnames == ("label1",)
+        
+        # Создание gauge с именем сервиса
+        service_gauge = create_gauge("service_gauge", "Service gauge", ["label1"], service_name="test_service")
+        assert service_gauge.name == "test_service_service_gauge"
+        assert service_gauge._documentation == "Service gauge"
+        assert service_gauge._labelnames == ("label1",)
+
+    @pytest.mark.unit
+    def test_no_duplicate_metrics(self):
+        """Проверка отсутствия дублирования метрик между сервисами"""
+        # Создаем 2 экземпляра метрик для одного сервиса с одинаковыми названиями
+        # Но благодаря registry=None они не должны конфликтовать
+        counter1 = create_counter("test_duplicate", "First counter", service_name="test_service")
+        counter2 = create_counter("test_duplicate", "Second counter", service_name="test_service")
+        
+        # Создаем счетчики с одинаковыми названиями для разных сервисов
+        # С префиксом сервиса они должны иметь разные имена
+        service1_counter = create_counter("request_count", "Service 1 requests", service_name="service1")
+        service2_counter = create_counter("request_count", "Service 2 requests", service_name="service2")
+        
+        # Проверяем, что счетчики с разными префиксами имеют разные имена
+        assert service1_counter.name == "service1_request_count"
+        assert service2_counter.name == "service2_request_count"
+        assert service1_counter.name != service2_counter.name
+        
+        # Создаем разные типы метрик с одинаковыми базовыми именами
+        counter = create_counter("metric", "Counter metric")
+        histogram = create_histogram("metric", "Histogram metric")
+        gauge = create_gauge("metric", "Gauge metric")
+        
+        # Вызываем inc() для всех счетчиков, чтобы проверить отсутствие конфликтов
+        counter1.inc()
+        counter2.inc()
+        service1_counter.inc()
+        service2_counter.inc()
+        counter.inc()
+        
+        # Проверка успешна, если при вызове методов не возникает исключений 
+
+    @pytest.mark.unit
+    def test_battle_mechanics_metrics_usage(self):
+        """Тестирование использования метрик боевой механики"""
+        # Создаем экземпляр метрик
+        metrics = BattleMechanicsMetrics()
+        
+        # Проверяем, что можно использовать метрики
+        metrics.movement_count.labels(result="success").inc()
+        metrics.rotation_count.labels(result="success").inc()
+        metrics.fire_count.labels(result="failure").inc()
+        metrics.collision_count.labels(result="detected").inc()
+        
+        # Проверяем базовые метрики
+        metrics.request_count.labels(service="battle_mechanics", endpoint="/test", method="GET").inc()
+        metrics.request_latency.labels(service="battle_mechanics", endpoint="/test").observe(0.1)
+        metrics.error_count.labels(service="battle_mechanics", error_type="ValueError").inc()
+        metrics.active_connections.labels(service="battle_mechanics").inc()
+        
+        # Если мы дошли до этой точки без исключений, тест считается успешным 
